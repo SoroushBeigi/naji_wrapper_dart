@@ -121,20 +121,28 @@ Future<Response> drivingLicences(Request request) async {
 }
 
 Future<Response> negativePoint(Request request) async {
-  final nationalCode = request.context['nationalCode'];
-  final mobileNumber = request.context['mobileNumber'];
-  final licenseNumber = request.context['licenseNumber'];
-  //TODO: check inputs
-  //TODO: api call
-  Future.delayed(const Duration(seconds: 2));
-  final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
-    "isDrivingAllowed": "true",
-    "negativePoint": "0",
-    "resultStatus": 0,
-    "resultStatusMessage": "عملیات با موفقیت انجام شد"
-  });
-  return Response.ok(najiResponse.getJson(),
-      headers: {"Content-Type": "application/json"});
+  final bodyString = await request.readAsString();
+  final Map<String, dynamic> body = jsonDecode(bodyString);
+
+  final String? nationalCode = body['nationalCode'] as String?;
+  final String? mobileNumber = body['mobileNumber'] as String?;
+  final String? licenseNumber = body['licenseNumber'] as String?;
+
+  if(mobileNumberError(mobileNumber)==null && nationalCodeError(nationalCode)==null && licenseNumberError(licenseNumber)==null){
+    //TODO: api call
+    Future.delayed(const Duration(seconds: 2));
+    final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
+      "isDrivingAllowed": "true",
+      "negativePoint": "0",
+      "resultStatus": 0,
+      "resultStatusMessage": "عملیات با موفقیت انجام شد"
+    });
+    return Response.ok(najiResponse.getJson(),
+        headers: {"Content-Type": "application/json"});
+  }else{
+    return mobileNumberError(mobileNumber) ?? nationalCodeError(nationalCode) ??licenseNumberError(licenseNumber)?? Response(520);
+  }
+
 }
 
 Future<Response> licensePlates(Request request) async {
@@ -274,3 +282,14 @@ Response? otpError(String? otp) {
   }
   return null;
 }
+
+Response? licenseNumberError(String? licenseNumber) {
+  if (licenseNumber == null|| licenseNumber=='') {
+    return Response.ok(
+        NajiResponse(resultCode: 1,failures: ['شماره سریال گواهینامه نمیتواند خالی باشد']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  return null;
+}
+
+
