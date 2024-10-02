@@ -146,22 +146,31 @@ Future<Response> negativePoint(Request request) async {
 }
 
 Future<Response> licensePlates(Request request) async {
-  final nationalCode = request.context['nationalCode'];
-  final mobileNumber = request.context['mobileNumber'];
-  //TODO: check inputs
-  //TODO: api call
-  Future.delayed(const Duration(seconds: 2));
-  final najiResponse = NajiResponse(resultCode: 0, failures: [], data: [
-    {
-      "serial": null,
-      "licensePlateNumber": null,
-      "description": null,
-      "separationDate": null,
-      "licensePlate": "پلاک موجود نمی باشد"
-    }
-  ]);
-  return Response.ok(najiResponse.getJson(),
-      headers: {"Content-Type": "application/json"});
+  final bodyString = await request.readAsString();
+  final Map<String, dynamic> body = jsonDecode(bodyString);
+
+  final String? nationalCode = body['nationalCode'] as String?;
+  final String? mobileNumber = body['mobileNumber'] as String?;
+
+
+  if(mobileNumberError(mobileNumber)==null && nationalCodeError(nationalCode)==null){
+    //TODO: api call
+    Future.delayed(const Duration(seconds: 2));
+    final najiResponse = NajiResponse(resultCode: 0, failures: [], data: [
+      {
+        "serial": null,
+        "licensePlateNumber": null,
+        "description": null,
+        "separationDate": null,
+        "licensePlate": "پلاک موجود نمی باشد"
+      }
+    ]);
+    return Response.ok(najiResponse.getJson(),
+        headers: {"Content-Type": "application/json"});
+  }else{
+    return mobileNumberError(mobileNumber) ?? nationalCodeError(nationalCode) ?? Response(520);
+  }
+
 }
 
 Future<Response> vehiclesViolations(Request request) async {
