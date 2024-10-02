@@ -90,26 +90,34 @@ Future<Response> verifyOtp(Request request) async {
 }
 
 Future<Response> drivingLicences(Request request) async {
-  final nationalCode = request.context['nationalCode'];
-  final mobileNumber = request.context['mobileNumber'];
-  //TODO: check inputs
-  //TODO: api call
-  Future.delayed(const Duration(seconds: 2));
-  final najiResponse = NajiResponse(resultCode: 0, failures: [], data: [
-    {
-      "nationalCode": "0150506651",
-      "firstName": "محمد سروش",
-      "lastName": "معصوم بيكي",
-      "title": "پايه سوم",
-      "rahvarStatus": "تحويل به پست",
-      "barcode": "18593000017055775950",
-      "printNumber": "4019483152",
-      "printDate": "1402/06/14",
-      "validYears": "10"
-    }
-  ]);
-  return Response.ok(najiResponse.getJson(),
-      headers: {"Content-Type": "application/json"});
+  final bodyString = await request.readAsString();
+  final Map<String, dynamic> body = jsonDecode(bodyString);
+
+  final String? nationalCode = body['nationalCode'] as String?;
+  final String? mobileNumber = body['mobileNumber'] as String?;
+
+  if(mobileNumberError(mobileNumber)==null && nationalCodeError(nationalCode)==null){
+    //TODO: api call
+    Future.delayed(const Duration(seconds: 2));
+    final najiResponse = NajiResponse(resultCode: 0, failures: [], data: [
+      {
+        "nationalCode": "0150506651",
+        "firstName": "محمد سروش",
+        "lastName": "معصوم بيكي",
+        "title": "پايه سوم",
+        "rahvarStatus": "تحويل به پست",
+        "barcode": "18593000017055775950",
+        "printNumber": "4019483152",
+        "printDate": "1402/06/14",
+        "validYears": "10"
+      }
+    ]);
+    return Response.ok(najiResponse.getJson(),
+        headers: {"Content-Type": "application/json"});
+  }else{
+    return mobileNumberError(mobileNumber) ?? nationalCodeError(nationalCode) ?? Response(520);
+  }
+
 }
 
 Future<Response> negativePoint(Request request) async {
