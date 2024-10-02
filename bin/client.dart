@@ -6,7 +6,5 @@ class HttpClient{
     return _client;
   }
 
-
-
   HttpClient._internal();
 }
