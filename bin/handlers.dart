@@ -301,4 +301,14 @@ Response? licenseNumberError(String? licenseNumber) {
   return null;
 }
 
+Response? plateNumberError(String? plateNumber) {
+  if (plateNumber == null|| plateNumber=='') {
+    return Response.ok(
+        NajiResponse(resultCode: 1,failures: ['شماره سریال گواهینامه نمیتواند خالی باشد']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  return null;
+}
+
+
 
