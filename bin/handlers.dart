@@ -35,7 +35,8 @@ Future<Response> validateUser(Request request) async {
     //TODO: api call
     Future.delayed(const Duration(seconds: 2));
     final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
-      'message': "کاربر قبال ثبت نام کرده است. نیازی به ثبت نام مجدد وجود ندارد"
+      'message': "کاربر قبال ثبت نام کرده است. نیازی به ثبت نام مجدد وجود ندارد",
+      "isRegistered":true,
     });
     return Response.ok(najiResponse.getJson(),
         headers: {"Content-Type": "application/json"});
