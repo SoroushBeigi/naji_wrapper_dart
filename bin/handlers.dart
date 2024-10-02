@@ -174,37 +174,47 @@ Future<Response> licensePlates(Request request) async {
 }
 
 Future<Response> vehiclesViolations(Request request) async {
-  final nationalCode = request.context['nationalCode'];
-  final mobileNumber = request.context['mobileNumber'];
-  final plateNumber = request.context['plateNumber'];
-  //TODO: check inputs
-  //TODO: api call
-  Future.delayed(const Duration(seconds: 2));
-  final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
-    "items": [
-      {
-        "violationid": "0",
-        "violationoccureddate": "0 - 0",
-        "violationoccuredtime": "0",
-        "violationdeliverytypename": "0",
-        "violationaddress": "0",
-        "violationtypeid": "0",
-        "violationtypename": "0",
-        "finalprice": 0,
-        "paperid": "0",
-        "paymentid": "0",
-        "hasimage": "false",
-        "platedictation": "0",
-        "plateChar": " شخصي  ايران 59 ــ  376ص13",
-        "updateviolationsdate": "0",
-        "inquirydate": "0",
-        "inquirytime": "0",
-        "pricestatus": "0"
-      }
-    ]
-  });
-  return Response.ok(najiResponse.getJson(),
-      headers: {"Content-Type": "application/json"});
+  final bodyString = await request.readAsString();
+  final Map<String, dynamic> body = jsonDecode(bodyString);
+
+  final String? nationalCode = body['nationalCode'] as String?;
+  final String? mobileNumber = body['mobileNumber'] as String?;
+  final String? plateNumber = body['plateNumber'];
+
+  if(mobileNumberError(mobileNumber)==null && nationalCodeError(nationalCode)==null && plateNumberError(plateNumber)==null){
+    //TODO: api call
+    Future.delayed(const Duration(seconds: 2));
+    final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
+      "items": [
+        {
+          "violationid": "0",
+          "violationoccureddate": "0 - 0",
+          "violationoccuredtime": "0",
+          "violationdeliverytypename": "0",
+          "violationaddress": "0",
+          "violationtypeid": "0",
+          "violationtypename": "0",
+          "finalprice": 0,
+          "paperid": "0",
+          "paymentid": "0",
+          "hasimage": "false",
+          "platedictation": "0",
+          "plateChar": " شخصي  ايران 59 ــ  376ص13",
+          "updateviolationsdate": "0",
+          "inquirydate": "0",
+          "inquirytime": "0",
+          "pricestatus": "0"
+        }
+      ]
+    });
+    return Response.ok(najiResponse.getJson(),
+        headers: {"Content-Type": "application/json"});
+  }else{
+    return mobileNumberError(mobileNumber) ?? nationalCodeError(nationalCode) ??plateNumberError(plateNumber)?? Response(520);
+  }
+
+
+
 }
 
 Future<Response> violationsAggregate(Request request) async {
@@ -304,7 +314,7 @@ Response? licenseNumberError(String? licenseNumber) {
 Response? plateNumberError(String? plateNumber) {
   if (plateNumber == null|| plateNumber=='') {
     return Response.ok(
-        NajiResponse(resultCode: 1,failures: ['شماره سریال گواهینامه نمیتواند خالی باشد']).getJson(),
+        NajiResponse(resultCode: 1,failures: ['شماره پلاک نمیتواند خالی باشد']).getJson(),
         headers: {"Content-Type": "application/json"});
   }
   return null;
