@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'naji_response.dart';
+import 'client.dart';
 
 Response echoHandler(Request request) {
   final message = request.params['message'];
@@ -12,12 +13,12 @@ Response echoHandler(Request request) {
 
 Response getAllServices(Request request) {
   final najiResponse = NajiResponse(resultCode: 0, failures: [], data: [
-    {'serviceName': 'نمره منفی', "price": 50000},
-    {'serviceName': 'پلاک‌های فعال', "price": 50000},
-    {'serviceName': 'استعلام گواهینامه', "price": 50000},
-    {'serviceName': 'استعلام خلافی', "price": 50000},
-    {'serviceName': 'تجمیع تخلفات خودرو', "price": 50000},
-    {'serviceName': 'کارت و سند', "price": 50000}
+    {'serviceName': 'نمره منفی', "price": 50000,'inputs':['nationalCode','mobileNumber','licenseNumber'],'title':'negativePoint'},
+    {'serviceName': 'پلاک‌های فعال', "price": 50000,'inputs':['nationalCode','mobileNumber'],'title':'licensePlates'},
+    {'serviceName': 'استعلام گواهینامه', "price": 50000,'inputs':['nationalCode','mobileNumber'],'title':'drivingLicenses'},
+    {'serviceName': 'استعلام خلافی', "price": 50000,'inputs':['nationalCode','mobileNumber','plateNumber'],'title':'vehiclesViolations'},
+    {'serviceName': 'تجمیع تخلفات خودرو', "price": 50000,'inputs':['nationalCode','mobileNumber','plateNumber'],'title':'violationsAggregate'},
+    {'serviceName': 'کارت و سند', "price": 50000,'inputs':['nationalCode','mobileNumber','plateNumber'],'title':'vehiclesDocumentsStatus'}
   ]);
   return Response.ok(najiResponse.getJson(),
       headers: {"Content-Type": "application/json"});
@@ -27,19 +28,29 @@ Future<Response> validateUser(Request request) async {
   final bodyString = await request.readAsString();
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
-  final String? nationalCode = body['nationalCode'] ;
-  final String? mobileNumber = body['mobileNumber'] ;
+  final String? nationalCode = body['nationalCode'];
+  final String? mobileNumber = body['mobileNumber'];
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
-    //TODO: api call
-    Future.delayed(const Duration(seconds: 2));
-    final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
-      'message': "کاربر قبال ثبت نام کرده است. نیازی به ثبت نام مجدد وجود ندارد",
-      "isRegistered":true,
+    final response = await NetworkModule.instance.dio.post('/naji/validityUser', data: {
+      'nationalCode': nationalCode,
+      'mobileNo': mobileNumber,
     });
-    return Response.ok(najiResponse.getJson(),
-        headers: {"Content-Type": "application/json"});
+    if (response.data['resultStatus']==0){
+      final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
+        'message':
+        "کاربر قبلا ثبت نام کرده است. نیازی به ثبت نام مجدد وجود ندارد",
+        "isRegistered": true,
+      });
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    }else{
+      final najiResponse = NajiResponse(resultCode: 1, failures: [response.data['resultStatusMessage']], data: {});
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
+
   } else {
     return mobileNumberError(mobileNumber) ??
         nationalCodeError(nationalCode) ??
@@ -51,19 +62,28 @@ Future<Response> sendOtp(Request request) async {
   final bodyString = await request.readAsString();
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
-  final String? nationalCode = body['nationalCode'] ;
-  final String? mobileNumber = body['mobileNumber'] ;
+  final String? nationalCode = body['nationalCode'];
+  final String? mobileNumber = body['mobileNumber'];
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
-    //TODO: api call
-    Future.delayed(const Duration(seconds: 2));
-    final najiResponse = NajiResponse(
-        resultCode: 0,
-        failures: [],
-        data: {'message': "عملیات با موفقیت انجام شد"});
-    return Response.ok(najiResponse.getJson(),
-        headers: {"Content-Type": "application/json"});
+    final response = await NetworkModule.instance.dio.post('/naji/initialRegister', data: {
+      'nationalCode': nationalCode,
+      'mobileNo': mobileNumber,
+    });
+    if (response.data['resultStatus']==0){
+      final najiResponse = NajiResponse(
+          resultCode: 0,
+          failures: [],
+          data: {'message': "عملیات با موفقیت انجام شد"});
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    }else{
+      final najiResponse = NajiResponse(resultCode: 1, failures: [response.data['resultStatusMessage']], data: {});
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
+
   } else {
     return mobileNumberError(mobileNumber) ??
         nationalCodeError(nationalCode) ??
@@ -75,8 +95,8 @@ Future<Response> verifyOtp(Request request) async {
   final bodyString = await request.readAsString();
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
-  final String? nationalCode = body['nationalCode'] ;
-  final String? mobileNumber = body['mobileNumber'] ;
+  final String? nationalCode = body['nationalCode'];
+  final String? mobileNumber = body['mobileNumber'];
   final String? otp = body['otp'];
 
   if (mobileNumberError(mobileNumber) == null &&
@@ -135,8 +155,8 @@ Future<Response> negativePoint(Request request) async {
   final bodyString = await request.readAsString();
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
-  final String? nationalCode = body['nationalCode'] ;
-  final String? mobileNumber = body['mobileNumber'] ;
+  final String? nationalCode = body['nationalCode'];
+  final String? mobileNumber = body['mobileNumber'];
   final String? licenseNumber = body['licenseNumber'];
 
   if (mobileNumberError(mobileNumber) == null &&
@@ -164,8 +184,8 @@ Future<Response> licensePlates(Request request) async {
   final bodyString = await request.readAsString();
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
-  final String? nationalCode = body['nationalCode'] ;
-  final String? mobileNumber = body['mobileNumber'] ;
+  final String? nationalCode = body['nationalCode'];
+  final String? mobileNumber = body['mobileNumber'];
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
@@ -193,8 +213,8 @@ Future<Response> vehiclesViolations(Request request) async {
   final bodyString = await request.readAsString();
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
-  final String? nationalCode = body['nationalCode'] ;
-  final String? mobileNumber = body['mobileNumber'] ;
+  final String? nationalCode = body['nationalCode'];
+  final String? mobileNumber = body['mobileNumber'];
   final String? plateNumber = body['plateNumber'];
 
   if (mobileNumberError(mobileNumber) == null &&
@@ -240,7 +260,7 @@ Future<Response> violationsAggregate(Request request) async {
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
   final String? nationalCode = body['nationalCode'];
-  final String? mobileNumber = body['mobileNumber'] ;
+  final String? mobileNumber = body['mobileNumber'];
   final String? plateNumber = body['plateNumber'];
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null &&
@@ -270,7 +290,7 @@ Future<Response> violationsImage(Request request) async {
   final bodyString = await request.readAsString();
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
-  final String? nationalCode = body['nationalCode'] ;
+  final String? nationalCode = body['nationalCode'];
   final String? mobileNumber = body['mobileNumber'];
   final String? plateNumber = body['plateNumber'];
   final String? violationId = body['violationId'];
@@ -303,7 +323,7 @@ Future<Response> vehiclesDocumentsStatus(Request request) async {
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
   final String? nationalCode = body['nationalCode'];
-  final String? mobileNumber = body['mobileNumber'] ;
+  final String? mobileNumber = body['mobileNumber'];
   final String? plateNumber = body['plateNumber'];
 
   if (mobileNumberError(mobileNumber) == null &&
@@ -329,13 +349,17 @@ Future<Response> vehiclesDocumentsStatus(Request request) async {
         plateNumberError(plateNumber) ??
         Response(520);
   }
-
 }
 
 Response? nationalCodeError(String? nationalCode) {
   if (nationalCode == null || nationalCode == '') {
     return Response.ok(
         NajiResponse(resultCode: 1, failures: ['کدملی نمیتواند خالی باشد'])
+            .getJson(),
+        headers: {"Content-Type": "application/json"});
+  }else if(nationalCode.length!=10){
+    return Response.ok(
+        NajiResponse(resultCode: 1, failures: ['کدملی باید 10 کاراکتر باشد'])
             .getJson(),
         headers: {"Content-Type": "application/json"});
   }
@@ -346,6 +370,11 @@ Response? mobileNumberError(String? mobileNumber) {
   if (mobileNumber == null || mobileNumber == '') {
     return Response.ok(
         NajiResponse(resultCode: 1, failures: ['شماره تلفن نمیتواند خالی باشد'])
+            .getJson(),
+        headers: {"Content-Type": "application/json"});
+  }else if(mobileNumber.length!=11){
+    return Response.ok(
+        NajiResponse(resultCode: 1, failures: ['شماره تلفن باید 11 کاراکتر باشد'])
             .getJson(),
         headers: {"Content-Type": "application/json"});
   }
