@@ -78,7 +78,8 @@ Future<Response> validateUser(Request request) async {
           headers: {"Content-Type": "application/json"});
     } else {
       final najiResponse = NajiResponse(
-          resultCode: 1,
+        //TODO: set to 1
+          resultCode: 0,
           failures: [response.data['resultStatusMessage']],
           data: {});
       return Response.ok(najiResponse.getJson(),
