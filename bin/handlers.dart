@@ -374,15 +374,18 @@ Future<Response> violationsImage(Request request) async {
           ..headers.add('violationId', violationId ?? '');
 
     if (response.data['resultStatus'] == 0) {
-      final najiResponse = NajiResponse(resultCode: 0, failures: [], data: response.data);
+      final najiResponse =
+          NajiResponse(resultCode: 0, failures: [], data: response.data);
       return Response.ok(najiResponse.getJson(),
           headers: {"Content-Type": "application/json"});
     } else {
-      final najiResponse = NajiResponse(resultCode: 1, failures: [response.data['resultStatusMessage']], data:{});
+      final najiResponse = NajiResponse(
+          resultCode: 1,
+          failures: [response.data['resultStatusMessage']],
+          data: {});
       return Response.ok(najiResponse.getJson(),
           headers: {"Content-Type": "application/json"});
     }
-
   } else {
     return mobileNumberError(mobileNumber) ??
         nationalCodeError(nationalCode) ??
@@ -403,20 +406,26 @@ Future<Response> vehiclesDocumentsStatus(Request request) async {
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null &&
       plateNumberError(plateNumber) == null) {
-    //TODO: api call
-    Future.delayed(const Duration(seconds: 2));
-    final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
-      "cardPostalBarcode": "18540004911163920623",
-      "cardPrintDate": "1402/02/11",
-      "cardStatusTitle": "تحويل شده به پست",
-      "documentPrintDate": "1398/09/12",
-      "documentStatusTitle": "صدور",
-      "plateChar": "ایران ۵۹ - ۳۷۶ ص  ۱۳",
-      "resultStatus": 0,
-      "resultStatusMessage": "عملیات با موفقیت انجام شد"
+    final response = await NetworkModule.instance.dio
+        .post('/naji/vehiclesViolations', data: {
+      'nationalCode': nationalCode,
+      'mobileNo': mobileNumber,
+      'plateNo': plateNumber,
     });
-    return Response.ok(najiResponse.getJson(),
-        headers: {"Content-Type": "application/json"});
+
+    if (response.data['resultStatus'] == 0) {
+      final najiResponse =
+          NajiResponse(resultCode: 0, failures: [], data: response.data);
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    } else {
+      final najiResponse = NajiResponse(
+          resultCode: 1,
+          failures: [response.data['resultStatusMessage']],
+          data: {});
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
   } else {
     return mobileNumberError(mobileNumber) ??
         nationalCodeError(nationalCode) ??
