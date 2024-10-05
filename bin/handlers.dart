@@ -13,12 +13,42 @@ Response echoHandler(Request request) {
 
 Response getAllServices(Request request) {
   final najiResponse = NajiResponse(resultCode: 0, failures: [], data: [
-    {'serviceName': 'نمره منفی', "price": 50000,'inputs':['nationalCode','mobileNumber','licenseNumber'],'title':'negativePoint'},
-    {'serviceName': 'پلاک‌های فعال', "price": 50000,'inputs':['nationalCode','mobileNumber'],'title':'licensePlates'},
-    {'serviceName': 'استعلام گواهینامه', "price": 50000,'inputs':['nationalCode','mobileNumber'],'title':'drivingLicenses'},
-    {'serviceName': 'استعلام خلافی', "price": 50000,'inputs':['nationalCode','mobileNumber','plateNumber'],'title':'vehiclesViolations'},
-    {'serviceName': 'تجمیع تخلفات خودرو', "price": 50000,'inputs':['nationalCode','mobileNumber','plateNumber'],'title':'violationsAggregate'},
-    {'serviceName': 'کارت و سند', "price": 50000,'inputs':['nationalCode','mobileNumber','plateNumber'],'title':'vehiclesDocumentsStatus'}
+    {
+      'serviceName': 'نمره منفی',
+      "price": 50000,
+      'inputs': ['nationalCode', 'mobileNumber', 'licenseNumber'],
+      'title': 'negativePoint'
+    },
+    {
+      'serviceName': 'پلاک‌های فعال',
+      "price": 50000,
+      'inputs': ['nationalCode', 'mobileNumber'],
+      'title': 'licensePlates'
+    },
+    {
+      'serviceName': 'استعلام گواهینامه',
+      "price": 50000,
+      'inputs': ['nationalCode', 'mobileNumber'],
+      'title': 'drivingLicenses'
+    },
+    {
+      'serviceName': 'استعلام خلافی',
+      "price": 50000,
+      'inputs': ['nationalCode', 'mobileNumber', 'plateNumber'],
+      'title': 'vehiclesViolations'
+    },
+    {
+      'serviceName': 'تجمیع تخلفات خودرو',
+      "price": 50000,
+      'inputs': ['nationalCode', 'mobileNumber', 'plateNumber'],
+      'title': 'violationsAggregate'
+    },
+    {
+      'serviceName': 'کارت و سند',
+      "price": 50000,
+      'inputs': ['nationalCode', 'mobileNumber', 'plateNumber'],
+      'title': 'vehiclesDocumentsStatus'
+    }
   ]);
   return Response.ok(najiResponse.getJson(),
       headers: {"Content-Type": "application/json"});
@@ -33,24 +63,27 @@ Future<Response> validateUser(Request request) async {
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
-    final response = await NetworkModule.instance.dio.post('/naji/validityUser', data: {
+    final response =
+        await NetworkModule.instance.dio.post('/naji/validityUser', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
     });
-    if (response.data['resultStatus']==0){
+    if (response.data['resultStatus'] == 0) {
       final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
         'message':
-        "کاربر قبلا ثبت نام کرده است. نیازی به ثبت نام مجدد وجود ندارد",
+            "کاربر قبلا ثبت نام کرده است. نیازی به ثبت نام مجدد وجود ندارد",
         "isRegistered": true,
       });
       return Response.ok(najiResponse.getJson(),
           headers: {"Content-Type": "application/json"});
-    }else{
-      final najiResponse = NajiResponse(resultCode: 1, failures: [response.data['resultStatusMessage']], data: {});
+    } else {
+      final najiResponse = NajiResponse(
+          resultCode: 1,
+          failures: [response.data['resultStatusMessage']],
+          data: {});
       return Response.ok(najiResponse.getJson(),
           headers: {"Content-Type": "application/json"});
     }
-
   } else {
     return mobileNumberError(mobileNumber) ??
         nationalCodeError(nationalCode) ??
@@ -67,23 +100,26 @@ Future<Response> sendOtp(Request request) async {
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
-    final response = await NetworkModule.instance.dio.post('/naji/initialRegister', data: {
+    final response =
+        await NetworkModule.instance.dio.post('/naji/initialRegister', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
     });
-    if (response.data['resultStatus']==0){
+    if (response.data['resultStatus'] == 0) {
       final najiResponse = NajiResponse(
           resultCode: 0,
           failures: [],
-          data: {'message': "عملیات با موفقیت انجام شد"});
+          data: {'message': response.data['resultStatusMessage']});
       return Response.ok(najiResponse.getJson(),
           headers: {"Content-Type": "application/json"});
-    }else{
-      final najiResponse = NajiResponse(resultCode: 1, failures: [response.data['resultStatusMessage']], data: {});
+    } else {
+      final najiResponse = NajiResponse(
+          resultCode: 1,
+          failures: [response.data['resultStatusMessage']],
+          data: {});
       return Response.ok(najiResponse.getJson(),
           headers: {"Content-Type": "application/json"});
     }
-
   } else {
     return mobileNumberError(mobileNumber) ??
         nationalCodeError(nationalCode) ??
@@ -102,14 +138,27 @@ Future<Response> verifyOtp(Request request) async {
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null &&
       otpError(otp) == null) {
-    //TODO: api call
-    Future.delayed(const Duration(seconds: 2));
-    final najiResponse = NajiResponse(
-        resultCode: 0,
-        failures: [],
-        data: {'message': "عملیات با موفقیت انجام شد"});
-    return Response.ok(najiResponse.getJson(),
-        headers: {"Content-Type": "application/json"});
+    final response =
+        await NetworkModule.instance.dio.post('/naji/registerUser', data: {
+      'nationalCode': nationalCode,
+      'mobileNo': mobileNumber,
+      'otp': otp,
+    });
+    if (response.data['resultStatus'] == 0) {
+      final najiResponse = NajiResponse(
+          resultCode: 0,
+          failures: [],
+          data: {'message': response.data['resultStatusMessage']});
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    } else {
+      final najiResponse = NajiResponse(
+          resultCode: 1,
+          failures: [response.data['resultStatusMessage']],
+          data: {});
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
   } else {
     return mobileNumberError(mobileNumber) ??
         nationalCodeError(nationalCode) ??
@@ -127,23 +176,25 @@ Future<Response> drivingLicences(Request request) async {
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
-    //TODO: api call
-    Future.delayed(const Duration(seconds: 2));
-    final najiResponse = NajiResponse(resultCode: 0, failures: [], data: [
-      {
-        "nationalCode": "0150506651",
-        "firstName": "محمد سروش",
-        "lastName": "معصوم بيكي",
-        "title": "پايه سوم",
-        "rahvarStatus": "تحويل به پست",
-        "barcode": "18593000017055775950",
-        "printNumber": "4019483152",
-        "printDate": "1402/06/14",
-        "validYears": "10"
-      }
-    ]);
-    return Response.ok(najiResponse.getJson(),
-        headers: {"Content-Type": "application/json"});
+    final response =
+        await NetworkModule.instance.dio.post('/naji/drivingLicenses', data: {
+      'nationalCode': nationalCode,
+      'mobileNo': mobileNumber,
+    });
+
+    if (response.data['resultStatus'] == 0) {
+      final najiResponse =
+          NajiResponse(resultCode: 0, failures: [], data: response.data);
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    } else {
+      final najiResponse = NajiResponse(
+          resultCode: 1,
+          failures: [response.data['resultStatusMessage']],
+          data: {});
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
   } else {
     return mobileNumberError(mobileNumber) ??
         nationalCodeError(nationalCode) ??
@@ -162,16 +213,26 @@ Future<Response> negativePoint(Request request) async {
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null &&
       licenseNumberError(licenseNumber) == null) {
-    //TODO: api call
-    Future.delayed(const Duration(seconds: 2));
-    final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
-      "isDrivingAllowed": "true",
-      "negativePoint": "0",
-      "resultStatus": 0,
-      "resultStatusMessage": "عملیات با موفقیت انجام شد"
+    final response =
+        await NetworkModule.instance.dio.post('/naji/negativePoint', data: {
+      'nationalCode': nationalCode,
+      'mobileNo': mobileNumber,
+      'licenseNumber': licenseNumber,
     });
-    return Response.ok(najiResponse.getJson(),
-        headers: {"Content-Type": "application/json"});
+
+    if (response.data['resultStatus'] == 0) {
+      final najiResponse =
+          NajiResponse(resultCode: 0, failures: [], data: response.data);
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    } else {
+      final najiResponse = NajiResponse(
+          resultCode: 1,
+          failures: [response.data['resultStatusMessage']],
+          data: {});
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
   } else {
     return mobileNumberError(mobileNumber) ??
         nationalCodeError(nationalCode) ??
@@ -189,19 +250,23 @@ Future<Response> licensePlates(Request request) async {
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
-    //TODO: api call
-    Future.delayed(const Duration(seconds: 2));
-    final najiResponse = NajiResponse(resultCode: 0, failures: [], data: [
-      {
-        "serial": null,
-        "licensePlateNumber": null,
-        "description": null,
-        "separationDate": null,
-        "licensePlate": "پلاک موجود نمی باشد"
-      }
-    ]);
-    return Response.ok(najiResponse.getJson(),
-        headers: {"Content-Type": "application/json"});
+    final response =
+        await NetworkModule.instance.dio.post('/naji/negativePoint', data: {
+      'nationalCode': nationalCode,
+      'mobileNo': mobileNumber,
+    });
+
+    if (response.data['resultStatus'] == 0) {
+      final najiResponse =
+          NajiResponse(resultCode: 0, failures: [], data: response.data);
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    } else {
+      final najiResponse =
+      NajiResponse(resultCode: 1, failures: response.data['resultStatusMessage'], data: {});
+      return Response.ok(najiResponse.getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
   } else {
     return mobileNumberError(mobileNumber) ??
         nationalCodeError(nationalCode) ??
@@ -357,7 +422,7 @@ Response? nationalCodeError(String? nationalCode) {
         NajiResponse(resultCode: 1, failures: ['کدملی نمیتواند خالی باشد'])
             .getJson(),
         headers: {"Content-Type": "application/json"});
-  }else if(nationalCode.length!=10){
+  } else if (nationalCode.length != 10) {
     return Response.ok(
         NajiResponse(resultCode: 1, failures: ['کدملی باید 10 کاراکتر باشد'])
             .getJson(),
@@ -372,10 +437,11 @@ Response? mobileNumberError(String? mobileNumber) {
         NajiResponse(resultCode: 1, failures: ['شماره تلفن نمیتواند خالی باشد'])
             .getJson(),
         headers: {"Content-Type": "application/json"});
-  }else if(mobileNumber.length!=11){
+  } else if (mobileNumber.length != 11) {
     return Response.ok(
-        NajiResponse(resultCode: 1, failures: ['شماره تلفن باید 11 کاراکتر باشد'])
-            .getJson(),
+        NajiResponse(
+            resultCode: 1,
+            failures: ['شماره تلفن باید 11 کاراکتر باشد']).getJson(),
         headers: {"Content-Type": "application/json"});
   }
   return null;
