@@ -29,7 +29,7 @@ Response getAllServices(Request request) {
       'serviceName': 'استعلام گواهینامه',
       "price": 50000,
       'inputs': ['nationalCode', 'mobileNumber'],
-      'title': 'drivingLicenses'
+      'title': 'drivingLicences'
     },
     {
       'serviceName': 'استعلام خلافی',
