@@ -12,6 +12,7 @@ Response echoHandler(Request request) {
 }
 
 Response getAllServices(Request request) {
+
   final najiResponse = NajiResponse(resultCode: 0, failures: [], data: [
     {
       'serviceName': 'نمره منفی',
