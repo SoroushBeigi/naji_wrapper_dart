@@ -328,7 +328,7 @@ Future<Response> violationsAggregate(Request request) async {
       nationalCodeError(nationalCode) == null &&
       plateNumberError(plateNumber) == null) {
     final response = await NetworkModule.instance.dio
-        .post('/naji/vehiclesViolations', data: {
+        .post('/naji/violationsAggregate', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
       'plateNo': plateNumber,
@@ -369,7 +369,7 @@ Future<Response> violationsImage(Request request) async {
       plateNumberError(plateNumber) == null &&
       violationIdError(violationId) == null) {
     final response =
-        await NetworkModule.instance.dio.get('/naji/vehiclesViolations')
+        await NetworkModule.instance.dio.get('/naji/violationsImage')
           ..headers.add('nationalCode', nationalCode ?? '')
           ..headers.add('mobileNo', mobileNumber ?? '')
           ..headers.add('plateNo', plateNumber ?? '')
@@ -409,7 +409,7 @@ Future<Response> vehiclesDocumentsStatus(Request request) async {
       nationalCodeError(nationalCode) == null &&
       plateNumberError(plateNumber) == null) {
     final response = await NetworkModule.instance.dio
-        .post('/naji/vehiclesViolations', data: {
+        .post('/naji/vehiclesDocumentsStatus', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
       'plateNo': plateNumber,
