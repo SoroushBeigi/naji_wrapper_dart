@@ -12,4 +12,14 @@ class ServiceModel {
     required this.title,
     required this.inputs,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'serviceName': serviceName,
+      "price": price,
+      'inputs': inputs,
+      'title': title,
+    };
+  }
 }

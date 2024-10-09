@@ -5,52 +5,16 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'naji_response.dart';
 import 'client.dart';
+import 'db_repository.dart';
 
 Response echoHandler(Request request) {
   final message = request.params['message'];
   return Response.ok('$message\n');
 }
 
-Response getAllServices(Request request) {
-
-  final najiResponse = NajiResponse(resultCode: 0, failures: [], data: [
-    {
-      'serviceName': 'نمره منفی',
-      "price": 50000,
-      'inputs': ['nationalCode', 'mobileNumber', 'licenseNumber'],
-      'title': 'negativePoint'
-    },
-    {
-      'serviceName': 'پلاک‌های فعال',
-      "price": 50000,
-      'inputs': ['nationalCode', 'mobileNumber'],
-      'title': 'licensePlates'
-    },
-    {
-      'serviceName': 'استعلام گواهینامه',
-      "price": 50000,
-      'inputs': ['nationalCode', 'mobileNumber'],
-      'title': 'drivingLicences'
-    },
-    {
-      'serviceName': 'استعلام خلافی',
-      "price": 50000,
-      'inputs': ['nationalCode', 'mobileNumber', 'plateNumber'],
-      'title': 'vehiclesViolations'
-    },
-    {
-      'serviceName': 'تجمیع تخلفات خودرو',
-      "price": 50000,
-      'inputs': ['nationalCode', 'mobileNumber', 'plateNumber'],
-      'title': 'violationsAggregate'
-    },
-    {
-      'serviceName': 'کارت و سند',
-      "price": 50000,
-      'inputs': ['nationalCode', 'mobileNumber', 'plateNumber'],
-      'title': 'vehiclesDocumentsStatus'
-    }
-  ]);
+Future<Response> getAllServices(Request request)async {
+  final dbResult = await ServiceRepository.instance!.getAll();
+  final najiResponse = NajiResponse(resultCode: 0, failures: [], data: dbResult.map((e) => e.toJson()).toList() );
   return Response.ok(najiResponse.getJson(),
       headers: {"Content-Type": "application/json"});
 }

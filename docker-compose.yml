@@ -21,6 +21,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 123456
       POSTGRES_DB: naji_db
+    ports:
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
 

@@ -21,11 +21,16 @@ mixin Deletable {
 }
 
 class ServiceRepository with Readable<ServiceModel> {
-  static ServiceRepository? _instance;
+  static ServiceRepository? instance;
+
   ServiceRepository._internal(this.connection);
 
   factory ServiceRepository(Connection connection) {
-    return _instance ??= ServiceRepository._internal(connection);
+    return instance ??= ServiceRepository._internal(connection);
+  }
+
+  void init() {
+    instance = ServiceRepository._internal(connection);
   }
 
   final Connection connection;
