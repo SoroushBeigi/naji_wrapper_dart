@@ -1,6 +1,7 @@
 import 'package:postgres/postgres.dart';
 
 import 'models/service_model.dart';
+import 'models/invoice_model.dart';
 
 mixin Writable<T> {
   Future<void> write(T model);
@@ -53,6 +54,58 @@ class ServiceRepository with Readable<ServiceModel> {
 
   @override
   Future<ServiceModel?> getById(String id) {
+    // TODO: implement getById
+    throw UnimplementedError();
+  }
+
+  Future<int> getPrice(String id) async {
+    final result = await connection.execute(
+      Sql.named("SELECT * FROM services WHERE id=@id"),
+      parameters: {'id': id},
+    );
+    return int.parse(result[0][2].toString());
+  }
+}
+
+class InvoiceRepository with Readable<InvoiceData>, Writable<InvoiceData> {
+  static InvoiceRepository? instance;
+
+  InvoiceRepository._internal(this.connection);
+
+  factory InvoiceRepository(Connection connection) {
+    return instance ??= InvoiceRepository._internal(connection);
+  }
+  void init() {
+    instance = InvoiceRepository._internal(connection);
+  }
+
+  final Connection connection;
+
+
+  @override
+  Future<void> write(invoiceData)async {
+    //TODO: finish writing db logic!!
+    String keys = '';
+    String values = '';
+    invoiceData.getFields().forEach((key, value) {
+      keys+= "$key, ";
+      values+= "'$value', ";
+    });
+    String query = 'INSERT INTO invoices (';
+    final result = await connection.execute(
+      Sql.named('UPDATE invoices SET'),
+      parameters: {'id': 'xyz'},
+    );
+  }
+
+  @override
+  Future<List<InvoiceData>> getAll() {
+    // TODO: implement getAll
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<InvoiceData?> getById(String id) {
     // TODO: implement getById
     throw UnimplementedError();
   }

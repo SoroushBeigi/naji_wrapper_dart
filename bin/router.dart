@@ -21,7 +21,8 @@ class NajiRouter{
   ..post('/violationsAggregate', violationsAggregate)
   ..post('/violationsImage', violationsImage)
   ..post('/vehiclesDocumentsStatus', vehiclesDocumentsStatus)
-  ..get('/time', time);
+  ..get('/time', time)
+  ..post('/payment', payment);
 
   get router => _router;
 

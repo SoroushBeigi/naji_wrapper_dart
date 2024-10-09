@@ -41,14 +41,17 @@ void main() async {
 
 
   var connection = await Connection.open(Endpoint(
-    port: 5433,
-    host: "172.16.4.146" ,
+    // port: 5433,
+    // host: "172.16.4.146" ,
+    port: 5432,
+    host: "db" ,
     database: DB_NAME ,
     username: DB_USER,
     password: DB_PASS,
   ),settings: ConnectionSettings(sslMode: SslMode.disable));
 
-  final serviceRepo = ServiceRepository(connection)..init();
+  ServiceRepository(connection).init();
+  InvoiceRepository(connection).init();
 
 
   final serviceRepository = ServiceRepository(connection);
@@ -60,8 +63,6 @@ void main() async {
   print(list[0].price);
   print(list[0].inputs);
   print(list[0].title);
-
-
 
   final handler =
       Pipeline().addMiddleware(logRequests()).addHandler(router.router.call);
