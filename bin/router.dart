@@ -1,4 +1,5 @@
-import 'handlers.dart';
+import 'handlers/naji_handlers.dart';
+import 'handlers/ipg_handlers.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 class NajiRouter{
@@ -19,7 +20,8 @@ class NajiRouter{
   ..post('/vehiclesViolations', vehiclesViolations)
   ..post('/violationsAggregate', violationsAggregate)
   ..post('/violationsImage', violationsImage)
-  ..post('/vehiclesDocumentsStatus', vehiclesDocumentsStatus);
+  ..post('/vehiclesDocumentsStatus', vehiclesDocumentsStatus)
+  ..get('/time', time);
 
   get router => _router;
 

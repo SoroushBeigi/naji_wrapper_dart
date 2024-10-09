@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
-import 'pretty_dio_logger.dart';
+import '../pretty_dio_logger.dart';
 
 const baseUrl = 'http://172.16.251.76:7003/ords/cif';
 
-class NetworkModule {
-  static final NetworkModule instance = NetworkModule._internal();
+class NajiNetworkModule {
+  static final NajiNetworkModule instance = NajiNetworkModule._internal();
 
-  NetworkModule._internal();
+  NajiNetworkModule._internal();
 
   Dio get dio => _getDio();
 

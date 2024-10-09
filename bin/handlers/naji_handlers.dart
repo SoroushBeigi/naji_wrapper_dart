@@ -2,15 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:shelf/shelf.dart';
-import 'package:shelf_router/shelf_router.dart';
-import 'naji_response.dart';
-import 'client.dart';
-import 'db_repository.dart';
-
-Response echoHandler(Request request) {
-  final message = request.params['message'];
-  return Response.ok('$message\n');
-}
+import '../naji_response.dart';
+import '../clients/naji_client.dart';
+import '../db_repository.dart';
 
 Future<Response> getAllServices(Request request)async {
   final dbResult = await ServiceRepository.instance!.getAll();
@@ -29,7 +23,7 @@ Future<Response> validateUser(Request request) async {
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
     final response =
-        await NetworkModule.instance.dio.post('/naji/validityUser', data: {
+        await NajiNetworkModule.instance.dio.post('/naji/validityUser', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
     });
@@ -43,8 +37,7 @@ Future<Response> validateUser(Request request) async {
           headers: {"Content-Type": "application/json"});
     } else {
       final najiResponse = NajiResponse(
-        //TODO: set to 1
-          resultCode: 0,
+          resultCode: 1,
           failures: [response.data['resultStatusMessage']],
           data: {});
       return Response.ok(najiResponse.getJson(),
@@ -67,7 +60,7 @@ Future<Response> sendOtp(Request request) async {
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
     final response =
-        await NetworkModule.instance.dio.post('/naji/initialRegister', data: {
+        await NajiNetworkModule.instance.dio.post('/naji/initialRegister', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
     });
@@ -105,7 +98,7 @@ Future<Response> verifyOtp(Request request) async {
       nationalCodeError(nationalCode) == null &&
       otpError(otp) == null) {
     final response =
-        await NetworkModule.instance.dio.post('/naji/registerUser', data: {
+        await NajiNetworkModule.instance.dio.post('/naji/registerUser', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
       'otp': otp,
@@ -143,7 +136,7 @@ Future<Response> drivingLicences(Request request) async {
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
     final response =
-        await NetworkModule.instance.dio.post('/naji/drivingLicenses', data: {
+        await NajiNetworkModule.instance.dio.post('/naji/drivingLicenses', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
     });
@@ -180,7 +173,7 @@ Future<Response> negativePoint(Request request) async {
       nationalCodeError(nationalCode) == null &&
       licenseNumberError(licenseNumber) == null) {
     final response =
-        await NetworkModule.instance.dio.post('/naji/negativePoint', data: {
+        await NajiNetworkModule.instance.dio.post('/naji/negativePoint', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
       'licenseNumber': licenseNumber,
@@ -217,7 +210,7 @@ Future<Response> licensePlates(Request request) async {
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
     final response =
-        await NetworkModule.instance.dio.post('/naji/licensePlates', data: {
+        await NajiNetworkModule.instance.dio.post('/naji/licensePlates', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
     });
@@ -253,7 +246,7 @@ Future<Response> vehiclesViolations(Request request) async {
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null &&
       plateNumberError(plateNumber) == null) {
-    final response = await NetworkModule.instance.dio
+    final response = await NajiNetworkModule.instance.dio
         .post('/naji/vehiclesViolations', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
@@ -291,7 +284,7 @@ Future<Response> violationsAggregate(Request request) async {
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null &&
       plateNumberError(plateNumber) == null) {
-    final response = await NetworkModule.instance.dio
+    final response = await NajiNetworkModule.instance.dio
         .post('/naji/violationsAggregate', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
@@ -333,7 +326,7 @@ Future<Response> violationsImage(Request request) async {
       plateNumberError(plateNumber) == null &&
       violationIdError(violationId) == null) {
     final response =
-        await NetworkModule.instance.dio.get('/naji/violationsImage')
+        await NajiNetworkModule.instance.dio.get('/naji/violationsImage')
           ..headers.add('nationalCode', nationalCode ?? '')
           ..headers.add('mobileNo', mobileNumber ?? '')
           ..headers.add('plateNo', plateNumber ?? '')
@@ -372,7 +365,7 @@ Future<Response> vehiclesDocumentsStatus(Request request) async {
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null &&
       plateNumberError(plateNumber) == null) {
-    final response = await NetworkModule.instance.dio
+    final response = await NajiNetworkModule.instance.dio
         .post('/naji/vehiclesDocumentsStatus', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
