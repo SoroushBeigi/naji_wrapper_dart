@@ -21,7 +21,12 @@ mixin Deletable {
   Future<void> delete(String id);
 }
 
-class ServiceRepository with Readable<ServiceModel>,Updatable<ServiceModel>,Deletable,Writable<ServiceModel> {
+class ServiceRepository
+    with
+        Readable<ServiceModel>,
+        Updatable<ServiceModel>,
+        Deletable,
+        Writable<ServiceModel> {
   static ServiceRepository? instance;
 
   ServiceRepository._internal(this.connection);
@@ -67,22 +72,42 @@ class ServiceRepository with Readable<ServiceModel>,Updatable<ServiceModel>,Dele
   }
 
   @override
-  Future<void> delete(String id) {
-    // TODO: implement delete
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> update(String id, ServiceModel model) {
-    // TODO: implement update
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> write(ServiceModel model)async{
+  Future<void> delete(String id) async{
     final result = await connection.execute(
-      Sql.named("INSERT INTO services (serviceName, price, title, inputs) VALUES (@serviceName, @price, @title, @inputs)"),
-      parameters: {'serviceName':model.serviceName,'price':model.price,'title':model.title,'inputs':model.inputs},
+      Sql.named(
+          "DELETE FROM services WHERE id=@id"),
+      parameters: {
+        'id': id
+      },
+    );
+  }
+
+  @override
+  Future<void> update(String id, ServiceModel model) async {
+    final result = await connection.execute(
+      Sql.named(
+          "UPDATE services SET serviceName=@serviceName, price=@price, title=@title,inputs=@inputs WHERE id=@id"),
+      parameters: {
+        'serviceName': model.serviceName,
+        'price': model.price,
+        'title': model.title,
+        'inputs': model.inputs,
+        'id': id
+      },
+    );
+  }
+
+  @override
+  Future<void> write(ServiceModel model) async {
+    final result = await connection.execute(
+      Sql.named(
+          "INSERT INTO services (serviceName, price, title, inputs) VALUES (@serviceName, @price, @title, @inputs)"),
+      parameters: {
+        'serviceName': model.serviceName,
+        'price': model.price,
+        'title': model.title,
+        'inputs': model.inputs
+      },
     );
   }
 }
@@ -95,21 +120,21 @@ class InvoiceRepository with Readable<InvoiceData>, Writable<InvoiceData> {
   factory InvoiceRepository(Connection connection) {
     return instance ??= InvoiceRepository._internal(connection);
   }
+
   void init() {
     instance = InvoiceRepository._internal(connection);
   }
 
   final Connection connection;
 
-
   @override
-  Future<void> write(invoiceData)async {
+  Future<void> write(invoiceData) async {
     //TODO: finish writing db logic!!
     String keys = '';
     String values = '';
     invoiceData.getFields().forEach((key, value) {
-      keys+= "$key, ";
-      values+= "'$value', ";
+      keys += "$key, ";
+      values += "'$value', ";
     });
     String query = 'INSERT INTO invoices (';
     final result = await connection.execute(
