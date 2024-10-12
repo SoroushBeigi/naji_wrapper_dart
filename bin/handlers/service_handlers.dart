@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:shelf/shelf.dart';
 import '../naji_response.dart';
-import '../db_repository.dart';
+import '../db/service_repository.dart';
 import '../models/service_model.dart';
 
 Future<Response> getService(Request request) async {

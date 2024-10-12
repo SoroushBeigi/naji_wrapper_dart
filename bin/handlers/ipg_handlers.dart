@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:shelf/shelf.dart';
 import '../naji_response.dart';
 import '../clients/ipg_client.dart';
-import '../db_repository.dart';
+import '../db/service_repository.dart';
+import '../db/invoice_repository.dart';
+import '../models/invoice_model.dart';
 
 Future<Response> time(Request request) async {
   final response = await IpgNetworkModule.instance.dio.get('/v1/Time');
@@ -18,15 +20,20 @@ Future<Response> payment(Request request) async {
   final bodyString = await request.readAsString();
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
-  final String? nationalCode = body['nationalCode'];
-  final String? mobileNumber = body['mobileNumber'];
   final String? plateNumber = body['plateNumber'];
   final String? licenseNumber = body['licenseNumber'];
-  final String? id = body['id'];
+  final String? userId = body['userId'];
+  final String? serviceId = body['serviceId'];
 
-  if (id == null) {
+  if (serviceId == null) {
     final najiResponse = NajiResponse(
         resultCode: 1, failures: ['شناسه خدمت ناجی یافت نشد.'], data: {});
+    return Response.ok(najiResponse.getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  if (userId == null) {
+    final najiResponse = NajiResponse(
+        resultCode: 1, failures: ['شناسه کاربر یافت نشد.'], data: {});
     return Response.ok(najiResponse.getJson(),
         headers: {"Content-Type": "application/json"});
   }
@@ -51,12 +58,26 @@ Future<Response> payment(Request request) async {
     "callbackURL": "eks://emdad.behpardaz.net/payment-result",
     "paymentId": "0"
   });
-  final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
-    'refId': response.data,
-    'callbackURL': 'eks://emdad.behpardaz.net/payment-result',
-  });
-  return Response.ok(najiResponse.getJson(),
-      headers: {"Content-Type": "application/json"});
+  InvoiceRepository.instance?.write(InvoiceData(
+    refId: response.data,
+    userId: userId,
+    licenseNumber: licenseNumber,
+    plateNumber: plateNumber,
+    serviceId: serviceId,
+  ));
+  if (response.statusCode == 200) {
+    final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
+      'refId': response.data,
+      'callbackURL': 'eks://emdad.behpardaz.net/payment-result',
+    });
+    return Response.ok(najiResponse.getJson(),
+        headers: {"Content-Type": "application/json"});
+  } else {
+    return Response.ok(
+        NajiResponse(resultCode: 1, failures: ['خطای سرویس آسان پرداخت']),
+        headers: {"Content-Type": "application/json"});
+  }
+
   // final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
   //   "callbackURL": "eks://emdad.behpardaz.net/payment-result",
   //   "refId":"1d8cea8adb1ad17eb"
@@ -65,7 +86,7 @@ Future<Response> payment(Request request) async {
   //     headers: {"Content-Type": "application/json"});
 }
 
-Future<Response> paymentGateway(Request request)async{
+Future<Response> paymentGateway(Request request) async {
   var refId = request.url.queryParameters['refId'];
 
   if (refId == null) {
