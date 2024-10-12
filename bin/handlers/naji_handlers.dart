@@ -21,22 +21,38 @@ Future<Response> addService(Request request) async {
   final bodyString = await request.readAsString();
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
-  if(body['price']==null){
-    return Response.ok(NajiResponse(resultCode: 1,data: {},failures: ['قیمت نمیتواند خالی باشد']).getJson(),
+  if (body['price'] == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            data: {},
+            failures: ['قیمت نمیتواند خالی باشد']).getJson(),
         headers: {"Content-Type": "application/json"});
   }
-  if(body['title']==null){
-    return Response.ok(NajiResponse(resultCode: 1,data: {},failures: ['عنوان نمیتواند خالی باشد']).getJson(),
+  if (body['title'] == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            data: {},
+            failures: ['عنوان نمیتواند خالی باشد']).getJson(),
         headers: {"Content-Type": "application/json"});
   }
 
-  if(body['serviceName']==null){
-    return Response.ok(NajiResponse(resultCode: 1,data: {},failures: ['نام سرویس  نمیتواند خالی باشد']).getJson(),
+  if (body['serviceName'] == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            data: {},
+            failures: ['نام سرویس  نمیتواند خالی باشد']).getJson(),
         headers: {"Content-Type": "application/json"});
   }
 
-  if(body['inputs']==null){
-    return Response.ok(NajiResponse(resultCode: 1,data: {},failures: ['ورودی ها نمیتوانند خالی باشند']).getJson(),
+  if (body['inputs'] == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            data: {},
+            failures: ['ورودی ها نمیتوانند خالی باشند']).getJson(),
         headers: {"Content-Type": "application/json"});
   }
 
@@ -47,9 +63,98 @@ Future<Response> addService(Request request) async {
       inputs: body['inputs']));
 
   final najiResponse = NajiResponse(
-      resultCode: 0,
-      failures: [],
-      data: {'message':'با موفقیت اضافه شد'},
+    resultCode: 0,
+    failures: [],
+    data: {'message': 'با موفقیت اضافه شد'},
+  );
+  return Response.ok(najiResponse.getJson(),
+      headers: {"Content-Type": "application/json"});
+}
+
+Future<Response> updateService(Request request) async {
+  final bodyString = await request.readAsString();
+  final Map<String, dynamic> body = jsonDecode(bodyString);
+
+  if (body['id'] == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            data: {},
+            failures: ['شناسه نمیتواند خالی باشد']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+
+  if (body['price'] == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            data: {},
+            failures: ['قیمت نمیتواند خالی باشد']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  if (body['title'] == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            data: {},
+            failures: ['عنوان نمیتواند خالی باشد']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+
+  if (body['serviceName'] == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            data: {},
+            failures: ['نام سرویس  نمیتواند خالی باشد']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+
+  if (body['inputs'] == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            data: {},
+            failures: ['ورودی ها نمیتوانند خالی باشند']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+
+  final dbResult = await ServiceRepository.instance!.update(
+    body['id'],
+    ServiceModel(
+      price: body['price'],
+      serviceName: body['serviceName'],
+      title: body['title'],
+      inputs: body['inputs'],
+    ),
+  );
+
+  final najiResponse = NajiResponse(
+    resultCode: 0,
+    failures: [],
+    data: {'message': 'با موفقیت بروزرسانی شد'},
+  );
+  return Response.ok(najiResponse.getJson(),
+      headers: {"Content-Type": "application/json"});
+}
+
+Future<Response> deleteService(Request request) async {
+  final bodyString = await request.readAsString();
+  final Map<String, dynamic> body = jsonDecode(bodyString);
+  if (body['id'] == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            data: {},
+            failures: ['شناسه نمیتواند خالی باشد']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  final dbResult = await ServiceRepository.instance!.delete(body['id']);
+
+  final najiResponse = NajiResponse(
+    resultCode: 0,
+    failures: [],
+    data: {'message': 'با موفقیت حذف شد'},
   );
   return Response.ok(najiResponse.getJson(),
       headers: {"Content-Type": "application/json"});
