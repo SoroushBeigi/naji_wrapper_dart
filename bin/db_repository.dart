@@ -58,9 +58,18 @@ class ServiceRepository
   }
 
   @override
-  Future<ServiceModel?> getById(String id) {
-    // TODO: implement getById
-    throw UnimplementedError();
+  Future<ServiceModel?> getById(String id) async {
+    final result = await connection.execute(
+      Sql.named("SELECT * FROM services WHERE id=@id"),
+      parameters: {'id': id},
+    );
+    return ServiceModel(
+      id: result[0][0].toString(),
+      serviceName: result[0][1].toString(),
+      price: result[0][2].toString(),
+      title: result[0][3].toString(),
+      inputs: result[0][4].toString(),
+    );
   }
 
   Future<int> getPrice(String id) async {
@@ -72,13 +81,10 @@ class ServiceRepository
   }
 
   @override
-  Future<void> delete(String id) async{
+  Future<void> delete(String id) async {
     final result = await connection.execute(
-      Sql.named(
-          "DELETE FROM services WHERE id=@id"),
-      parameters: {
-        'id': id
-      },
+      Sql.named("DELETE FROM services WHERE id=@id"),
+      parameters: {'id': id},
     );
   }
 

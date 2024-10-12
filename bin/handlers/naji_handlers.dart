@@ -7,6 +7,21 @@ import '../clients/naji_client.dart';
 import '../db_repository.dart';
 import '../models/service_model.dart';
 
+
+Future<Response> getService(Request request) async {
+  if (request.url.pathSegments.length == 2 && request.url.pathSegments[0] == 'service') {
+    final  id = request.url.pathSegments[1];
+    final dbResult = await ServiceRepository.instance!.getById(id);
+    final najiResponse = NajiResponse(
+        resultCode: 0,
+        failures: [],
+        data: dbResult?.toJson() ?? {});
+    return Response.ok(najiResponse.getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  return Response.notFound('Not found');
+}
+
 Future<Response> getAllServices(Request request) async {
   final dbResult = await ServiceRepository.instance!.getAll();
   final najiResponse = NajiResponse(

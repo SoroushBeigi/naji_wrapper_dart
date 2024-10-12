@@ -10,10 +10,11 @@ class NajiRouter {
   }
 
   final _router = Router()
-    ..get('/getAllServices', getAllServices)
-    ..post('/addService', addService)
-    ..put('/updateService', updateService)
-    ..delete('/deleteService', deleteService)
+    ..get('/service/<id>', getService)
+    ..get('/allServices', getAllServices)
+    ..post('/service', addService)
+    ..put('/service', updateService)
+    ..delete('/service', deleteService)
     ..post('/validateUser', validateUser)
     ..post('/sendOtp', sendOtp)
     ..post('/verifyOtp', verifyOtp)
