@@ -21,7 +21,7 @@ mixin Deletable {
   Future<void> delete(String id);
 }
 
-class ServiceRepository with Readable<ServiceModel> {
+class ServiceRepository with Readable<ServiceModel>,Updatable<ServiceModel>,Deletable,Writable<ServiceModel> {
   static ServiceRepository? instance;
 
   ServiceRepository._internal(this.connection);
@@ -64,6 +64,26 @@ class ServiceRepository with Readable<ServiceModel> {
       parameters: {'id': id},
     );
     return int.parse(result[0][2].toString());
+  }
+
+  @override
+  Future<void> delete(String id) {
+    // TODO: implement delete
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> update(String id, ServiceModel model) {
+    // TODO: implement update
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> write(ServiceModel model)async{
+    final result = await connection.execute(
+      Sql.named("INSERT INTO services (serviceName, price, title, inputs) VALUES (@serviceName, @price, @title, @inputs)"),
+      parameters: {'serviceName':model.serviceName,'price':model.price,'title':model.title,'inputs':model.inputs},
+    );
   }
 }
 

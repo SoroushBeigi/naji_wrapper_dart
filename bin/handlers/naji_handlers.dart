@@ -5,10 +5,52 @@ import 'package:shelf/shelf.dart';
 import '../naji_response.dart';
 import '../clients/naji_client.dart';
 import '../db_repository.dart';
+import '../models/service_model.dart';
 
-Future<Response> getAllServices(Request request)async {
+Future<Response> getAllServices(Request request) async {
   final dbResult = await ServiceRepository.instance!.getAll();
-  final najiResponse = NajiResponse(resultCode: 0, failures: [], data: dbResult.map((e) => e.toJson()).toList() );
+  final najiResponse = NajiResponse(
+      resultCode: 0,
+      failures: [],
+      data: dbResult.map((e) => e.toJson()).toList());
+  return Response.ok(najiResponse.getJson(),
+      headers: {"Content-Type": "application/json"});
+}
+
+Future<Response> addService(Request request) async {
+  final bodyString = await request.readAsString();
+  final Map<String, dynamic> body = jsonDecode(bodyString);
+
+  if(body['price']==null){
+    return Response.ok(NajiResponse(resultCode: 1,data: {},failures: ['قیمت نمیتواند خالی باشد']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  if(body['title']==null){
+    return Response.ok(NajiResponse(resultCode: 1,data: {},failures: ['عنوان نمیتواند خالی باشد']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+
+  if(body['serviceName']==null){
+    return Response.ok(NajiResponse(resultCode: 1,data: {},failures: ['نام سرویس  نمیتواند خالی باشد']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+
+  if(body['inputs']==null){
+    return Response.ok(NajiResponse(resultCode: 1,data: {},failures: ['ورودی ها نمیتوانند خالی باشند']).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+
+  final dbResult = await ServiceRepository.instance!.write(ServiceModel(
+      price: body['price'],
+      serviceName: body['serviceName'],
+      title: body['title'],
+      inputs: body['inputs']));
+
+  final najiResponse = NajiResponse(
+      resultCode: 0,
+      failures: [],
+      data: {'message':'با موفقیت اضافه شد'},
+  );
   return Response.ok(najiResponse.getJson(),
       headers: {"Content-Type": "application/json"});
 }
@@ -59,8 +101,8 @@ Future<Response> sendOtp(Request request) async {
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
-    final response =
-        await NajiNetworkModule.instance.dio.post('/naji/initialRegister', data: {
+    final response = await NajiNetworkModule.instance.dio
+        .post('/naji/initialRegister', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
     });
@@ -135,8 +177,8 @@ Future<Response> drivingLicences(Request request) async {
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
-    final response =
-        await NajiNetworkModule.instance.dio.post('/naji/drivingLicenses', data: {
+    final response = await NajiNetworkModule.instance.dio
+        .post('/naji/drivingLicenses', data: {
       'nationalCode': nationalCode,
       'mobileNo': mobileNumber,
     });

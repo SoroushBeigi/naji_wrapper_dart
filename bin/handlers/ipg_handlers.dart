@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:shelf/shelf.dart';
 import '../naji_response.dart';
@@ -62,4 +63,31 @@ Future<Response> payment(Request request) async {
   // });
   // return Response.ok(najiResponse.getJson(),
   //     headers: {"Content-Type": "application/json"});
+}
+
+Future<Response> paymentGateway(Request request)async{
+  var refId = request.url.queryParameters['refId'];
+
+  if (refId == null) {
+    return Response.notFound('یافت نشد RefId');
+  }
+
+  var htmlContent = '''
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>انتقال به پرداخت...</title>
+      </head>
+      <body onload="document.forms['paymentForm'].submit()">
+        <p>درحال انتقال به درگاه پرداخت...</p>
+        <form id="paymentForm" method="POST" action="https://asan.shaparak.ir">
+          <input type="hidden" name="RefId" value="$refId" />
+        </form>
+      </body>
+    </html>
+    ''';
+
+  return Response.ok(htmlContent, headers: {
+    HttpHeaders.contentTypeHeader: 'text/html',
+  });
 }
