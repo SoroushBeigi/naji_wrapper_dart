@@ -1,5 +1,6 @@
 import 'handlers/naji_handlers.dart';
 import 'handlers/ipg_handlers.dart';
+import 'handlers/service_handlers.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 class NajiRouter {
