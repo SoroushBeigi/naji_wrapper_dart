@@ -43,7 +43,7 @@ class ServiceRepository
 
   @override
   Future<List<ServiceModel>> getAll() async {
-    final result = await connection.execute("SELECT * FROM services");
+    final result = await connection.execute("SELECT * FROM services WHERE isDeleted=false");
     return result
         .map(
           (element) => ServiceModel(
@@ -60,7 +60,7 @@ class ServiceRepository
   @override
   Future<ServiceModel?> getById(String id) async {
     final result = await connection.execute(
-      Sql.named("SELECT * FROM services WHERE id=@id"),
+      Sql.named("SELECT * FROM services WHERE id=@id AND isDeleted=false"),
       parameters: {'id': id},
     );
     return ServiceModel(
@@ -83,7 +83,7 @@ class ServiceRepository
   @override
   Future<void> delete(String id) async {
     final result = await connection.execute(
-      Sql.named("DELETE FROM services WHERE id=@id"),
+      Sql.named("UPDATE services SET isDeleted=true WHERE id=@id"),
       parameters: {'id': id},
     );
   }

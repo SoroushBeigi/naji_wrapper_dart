@@ -12,7 +12,7 @@ class NajiRouter {
 
   final _router = Router()
     ..get('/service/<id>', getService)
-    ..get('/allServices', getAllServices)
+    ..get('/getAllServices', getAllServices)
     ..post('/service', addService)
     ..put('/service', updateService)
     ..delete('/service', deleteService)
