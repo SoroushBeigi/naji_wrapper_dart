@@ -6,6 +6,7 @@ import 'package:shelf/shelf_io.dart';
 import 'router.dart';
 import 'db/service_repository.dart';
 import 'db/invoice_repository.dart';
+import 'db/user_repository.dart';
 
 // const PORT='8080';
 // const DB_PORT='5432';
@@ -50,17 +51,7 @@ void main() async {
 
   ServiceRepository(connection).init();
   InvoiceRepository(connection).init();
-
-
-  final serviceRepository = ServiceRepository(connection);
-  final list = await serviceRepository.getAll();
-
-  //EXAMPLE: database repository usage
-  print(list[0].id);
-  print(list[0].serviceName);
-  print(list[0].price);
-  print(list[0].inputs);
-  print(list[0].title);
+  UserRepository(connection).init();
 
   final handler =
       Pipeline().addMiddleware(logRequests()).addHandler(router.router.call);

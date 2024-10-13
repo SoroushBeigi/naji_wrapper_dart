@@ -4,9 +4,8 @@ import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import '../naji_response.dart';
 import '../clients/naji_client.dart';
-import '../db/service_repository.dart';
-import '../models/service_model.dart';
-
+import '../db/user_repository.dart';
+import '../models/user_model.dart';
 
 Future<Response> validateUser(Request request) async {
   final bodyString = await request.readAsString();
@@ -14,6 +13,9 @@ Future<Response> validateUser(Request request) async {
 
   final String? nationalCode = body['nationalCode'];
   final String? mobileNumber = body['mobileNumber'];
+  final String? guid = body['guid'];
+  final String? firstName = body['firstName'];
+  final String? lastName = body['lastName'];
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null) {
@@ -23,9 +25,17 @@ Future<Response> validateUser(Request request) async {
       'mobileNo': mobileNumber,
     });
     if (response.data['resultStatus'] == 0) {
+      await UserRepository.instance?.saveUserInDb(
+        UserModel(
+          guid: guid,
+          firstName: firstName,
+          lastName: lastName,
+          mobileNumber: mobileNumber,
+          nationalCode: nationalCode,
+        ),
+      );
       final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
-        'message':
-            "کاربر قبلا ثبت نام کرده است. نیازی به ثبت نام مجدد وجود ندارد",
+        'message': response.data['resultStatusMessage'],
         "isRegistered": true,
       });
       return Response.ok(najiResponse.getJson(),
@@ -88,6 +98,9 @@ Future<Response> verifyOtp(Request request) async {
   final String? nationalCode = body['nationalCode'];
   final String? mobileNumber = body['mobileNumber'];
   final String? otp = body['otp'];
+  final String? guid = body['guid'];
+  final String? firstName = body['firstName'];
+  final String? lastName = body['lastName'];
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null &&

@@ -5,7 +5,7 @@ mixin Writable<T> {
 mixin Readable<T> {
   Future<T?> getById(String id);
 
-  Future<List<T>> getAll();
+  Future<List<T>?> getAll();
 }
 
 mixin Updatable<T> {

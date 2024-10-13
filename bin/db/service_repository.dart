@@ -24,9 +24,12 @@ class ServiceRepository
   final Connection connection;
 
   @override
-  Future<List<ServiceModel>> getAll() async {
+  Future<List<ServiceModel>?> getAll() async {
     final result = await connection
         .execute("SELECT * FROM services WHERE isDeleted=false");
+    if(result.isEmpty){
+      return null;
+    }
     return result
         .map(
           (element) => ServiceModel(
@@ -46,6 +49,9 @@ class ServiceRepository
       Sql.named("SELECT * FROM services WHERE id=@id AND isDeleted=false"),
       parameters: {'id': id},
     );
+    if(result.isEmpty){
+      return null;
+    }
     return ServiceModel(
       id: result[0][0].toString(),
       serviceName: result[0][1].toString(),

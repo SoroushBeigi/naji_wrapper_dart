@@ -10,6 +10,9 @@ Future<Response> getService(Request request) async {
   if (request.url.pathSegments.length == 2 && request.url.pathSegments[0] == 'service') {
     final  id = request.url.pathSegments[1];
     final dbResult = await ServiceRepository.instance!.getById(id);
+    if(dbResult?.id==null){
+      return Response.notFound('Not found');
+    }
     final najiResponse = NajiResponse(
         resultCode: 0,
         failures: [],
@@ -25,7 +28,7 @@ Future<Response> getAllServices(Request request) async {
   final najiResponse = NajiResponse(
       resultCode: 0,
       failures: [],
-      data: dbResult.map((e) => e.toJson()).toList());
+      data: dbResult?.map((e) => e.toJson()).toList());
   return Response.ok(najiResponse.getJson(),
       headers: {"Content-Type": "application/json"});
 }
