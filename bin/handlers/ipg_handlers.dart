@@ -52,7 +52,7 @@ Future<Response> payment(Request request) async {
   final localDate = await IpgNetworkModule.instance.dio.get('/v1/Time');
   final String refId;
   final String localInvoiceId =
-      DateTime.now().microsecondsSinceEpoch.toString();
+      DateTime.now().millisecondsSinceEpoch.toString();
 
   try {
     final response =
@@ -71,7 +71,7 @@ Future<Response> payment(Request request) async {
       return Response.ok(
           NajiResponse(
               resultCode: 1,
-              failures: ['خطای سرویس آسان پرداخت'],
+              failures: ['سرویس آسان پرداخت در دسترس نیست، پس از مدتی دوباره تلاش کنید'],
               data: {}).getJson(),
           headers: {"Content-Type": "application/json"});
     }
@@ -80,7 +80,7 @@ Future<Response> payment(Request request) async {
     return Response.ok(
         NajiResponse(
             resultCode: 1,
-            failures: ['خطای سرویس آسان پرداخت'],
+            failures: ['سرویس آسان پرداخت در دسترس نیست، پس از مدتی دوباره تلاش کنید'],
             data: {}).getJson(),
         headers: {"Content-Type": "application/json"});
   }

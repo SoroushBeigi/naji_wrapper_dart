@@ -8,51 +8,65 @@ import '../db/user_repository.dart';
 import '../models/user_model.dart';
 
 Future<Response> validateUser(Request request) async {
-  final bodyString = await request.readAsString();
-  final Map<String, dynamic> body = jsonDecode(bodyString);
-
-  final String? nationalCode = body['nationalCode'];
-  final String? mobileNumber = body['mobileNumber'];
-  final String? guid = body['guid'];
-  final String? firstName = body['firstName'];
-  final String? lastName = body['lastName'];
-
-  if (mobileNumberError(mobileNumber) == null &&
-      nationalCodeError(nationalCode) == null) {
-    final response =
-        await NajiNetworkModule.instance.dio.post('/naji/validityUser', data: {
-      'nationalCode': nationalCode,
-      'mobileNo': mobileNumber,
-    });
-    if (response.data['resultStatus'] == 0) {
-      await UserRepository.instance?.saveUserInDb(
-        UserModel(
-          guid: guid,
-          firstName: firstName,
-          lastName: lastName,
-          mobileNumber: mobileNumber,
-          nationalCode: nationalCode,
-        ),
-      );
-      final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
-        'message': response.data['resultStatusMessage'],
-        "isRegistered": true,
+  final String? nationalCode;
+  final String? mobileNumber;
+  final String? guid;
+  final String? firstName;
+  final String? lastName;
+  try {
+    final bodyString = await request.readAsString();
+    final Map<String, dynamic> body = jsonDecode(bodyString);
+    nationalCode = body['nationalCode'];
+    mobileNumber = body['mobileNumber'];
+    guid = body['guid'];
+    firstName = body['firstName'];
+    lastName = body['lastName'];
+    if (mobileNumberError(mobileNumber) == null &&
+        nationalCodeError(nationalCode) == null) {
+      final response =
+      await NajiNetworkModule.instance.dio.post('/naji/validityUser', data: {
+        'nationalCode': nationalCode,
+        'mobileNo': mobileNumber,
       });
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
+      if (response.data['resultStatus'] == 0) {
+        await UserRepository.instance?.saveUserInDb(
+          UserModel(
+            guid: guid,
+            firstName: firstName,
+            lastName: lastName,
+            mobileNumber: mobileNumber,
+            nationalCode: nationalCode,
+          ),
+        );
+        final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
+          'message': response.data['resultStatusMessage'],
+          "isRegistered": true,
+        });
+        return Response.ok(najiResponse.getJson(),
+            headers: {"Content-Type": "application/json"});
+      } else {
+        final najiResponse = NajiResponse(
+            resultCode: 1,
+            failures: [response.data['resultStatusMessage']],
+            data: {});
+        return Response.ok(najiResponse.getJson(),
+            headers: {"Content-Type": "application/json"});
+      }
     } else {
-      final najiResponse = NajiResponse(
-          resultCode: 1,
-          failures: [response.data['resultStatusMessage']],
-          data: {});
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
+      return mobileNumberError(mobileNumber) ??
+          nationalCodeError(nationalCode) ??
+          Response(520);
     }
-  } else {
-    return mobileNumberError(mobileNumber) ??
-        nationalCodeError(nationalCode) ??
-        Response(520);
+  } catch (e) {
+    final najiResponse = NajiResponse(
+        resultCode: 1,
+        failures: ['خطا در دریافت اطلاعات'],
+        data: {});
+    return Response.ok(najiResponse.getJson(),
+        headers: {"Content-Type": "application/json"});
   }
+
+
 }
 
 Future<Response> sendOtp(Request request) async {
