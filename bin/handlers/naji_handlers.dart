@@ -23,8 +23,8 @@ Future<Response> validateUser(Request request) async {
     lastName = body['lastName'];
     if (mobileNumberError(mobileNumber) == null &&
         nationalCodeError(nationalCode) == null) {
-      final response =
-      await NajiNetworkModule.instance.dio.post('/naji/validityUser', data: {
+      final response = await NajiNetworkModule.instance.dio
+          .post('/naji/validityUser', data: {
         'nationalCode': nationalCode,
         'mobileNo': mobileNumber,
       });
@@ -59,14 +59,10 @@ Future<Response> validateUser(Request request) async {
     }
   } catch (e) {
     final najiResponse = NajiResponse(
-        resultCode: 1,
-        failures: ['خطا در دریافت اطلاعات'],
-        data: {});
+        resultCode: 1, failures: ['خطا در دریافت اطلاعات'], data: {});
     return Response.ok(najiResponse.getJson(),
         headers: {"Content-Type": "application/json"});
   }
-
-
 }
 
 Future<Response> sendOtp(Request request) async {
@@ -171,155 +167,69 @@ Future<Map<String, dynamic>?> drivingLicences(
   return null;
 }
 
-Future<Response> negativePoint(Request request) async {
-  final bodyString = await request.readAsString();
-  final Map<String, dynamic> body = jsonDecode(bodyString);
+Future<Map<String, dynamic>?> negativePoint(
+    {required String nationalCode,
+    required String mobileNumber,
+    required String licenseNumber}) async {
+  final response =
+      await NajiNetworkModule.instance.dio.post('/naji/negativePoint', data: {
+    'nationalCode': nationalCode,
+    'mobileNo': mobileNumber,
+    'licenseNumber': licenseNumber,
+  });
 
-  final String? nationalCode = body['nationalCode'];
-  final String? mobileNumber = body['mobileNumber'];
-  final String? licenseNumber = body['licenseNumber'];
-
-  if (mobileNumberError(mobileNumber) == null &&
-      nationalCodeError(nationalCode) == null &&
-      licenseNumberError(licenseNumber) == null) {
-    final response =
-        await NajiNetworkModule.instance.dio.post('/naji/negativePoint', data: {
-      'nationalCode': nationalCode,
-      'mobileNo': mobileNumber,
-      'licenseNumber': licenseNumber,
-    });
-
-    if (response.data['resultStatus'] == 0) {
-      final najiResponse =
-          NajiResponse(resultCode: 0, failures: [], data: response.data);
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
-    } else {
-      final najiResponse = NajiResponse(
-          resultCode: 1,
-          failures: [response.data['resultStatusMessage']],
-          data: {});
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
-    }
-  } else {
-    return mobileNumberError(mobileNumber) ??
-        nationalCodeError(nationalCode) ??
-        licenseNumberError(licenseNumber) ??
-        Response(520);
+  if (response.statusCode == 200) {
+    return response.data;
   }
+  return null;
 }
 
-Future<Response> licensePlates(Request request) async {
-  final bodyString = await request.readAsString();
-  final Map<String, dynamic> body = jsonDecode(bodyString);
+Future<Map<String, dynamic>?> licensePlates(
+    {required String nationalCode, required String mobileNumber}) async {
+  final response =
+      await NajiNetworkModule.instance.dio.post('/naji/licensePlates', data: {
+    'nationalCode': nationalCode,
+    'mobileNo': mobileNumber,
+  });
 
-  final String? nationalCode = body['nationalCode'];
-  final String? mobileNumber = body['mobileNumber'];
-
-  if (mobileNumberError(mobileNumber) == null &&
-      nationalCodeError(nationalCode) == null) {
-    final response =
-        await NajiNetworkModule.instance.dio.post('/naji/licensePlates', data: {
-      'nationalCode': nationalCode,
-      'mobileNo': mobileNumber,
-    });
-
-    if (response.data['resultStatus'] == 0) {
-      final najiResponse =
-          NajiResponse(resultCode: 0, failures: [], data: response.data);
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
-    } else {
-      final najiResponse = NajiResponse(
-          resultCode: 1,
-          failures: response.data['resultStatusMessage'],
-          data: {});
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
-    }
-  } else {
-    return mobileNumberError(mobileNumber) ??
-        nationalCodeError(nationalCode) ??
-        Response(520);
+  if (response.statusCode == 200) {
+    return response.data;
   }
+  return null;
 }
 
-Future<Response> vehiclesViolations(Request request) async {
-  final bodyString = await request.readAsString();
-  final Map<String, dynamic> body = jsonDecode(bodyString);
+Future<Map<String, dynamic>?> vehiclesViolations(
+    {required String plateNumber,
+    required String nationalCode,
+    required String mobileNumber}) async {
+  final response = await NajiNetworkModule.instance.dio
+      .post('/naji/vehiclesViolations', data: {
+    'nationalCode': nationalCode,
+    'mobileNo': mobileNumber,
+    'plateNo': plateNumber,
+  });
 
-  final String? nationalCode = body['nationalCode'];
-  final String? mobileNumber = body['mobileNumber'];
-  final String? plateNumber = body['plateNumber'];
-
-  if (mobileNumberError(mobileNumber) == null &&
-      nationalCodeError(nationalCode) == null &&
-      plateNumberError(plateNumber) == null) {
-    final response = await NajiNetworkModule.instance.dio
-        .post('/naji/vehiclesViolations', data: {
-      'nationalCode': nationalCode,
-      'mobileNo': mobileNumber,
-      'plateNo': plateNumber,
-    });
-
-    if (response.data['resultStatus'] == 0) {
-      final najiResponse =
-          NajiResponse(resultCode: 0, failures: [], data: response.data);
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
-    } else {
-      final najiResponse = NajiResponse(
-          resultCode: 1,
-          failures: [response.data['resultStatusMessage']],
-          data: {});
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
-    }
-  } else {
-    return mobileNumberError(mobileNumber) ??
-        nationalCodeError(nationalCode) ??
-        plateNumberError(plateNumber) ??
-        Response(520);
+  if (response.statusCode == 200) {
+    return response.data;
   }
+  return null;
 }
 
-Future<Response> violationsAggregate(Request request) async {
-  final bodyString = await request.readAsString();
-  final Map<String, dynamic> body = jsonDecode(bodyString);
+Future<Map<String, dynamic>?> violationsAggregate(
+    {required String nationalCode,
+    required String mobileNumber,
+    required String plateNumber}) async {
+  final response = await NajiNetworkModule.instance.dio
+      .post('/naji/violationsAggregate', data: {
+    'nationalCode': nationalCode,
+    'mobileNo': mobileNumber,
+    'plateNo': plateNumber,
+  });
 
-  final String? nationalCode = body['nationalCode'];
-  final String? mobileNumber = body['mobileNumber'];
-  final String? plateNumber = body['plateNumber'];
-  if (mobileNumberError(mobileNumber) == null &&
-      nationalCodeError(nationalCode) == null &&
-      plateNumberError(plateNumber) == null) {
-    final response = await NajiNetworkModule.instance.dio
-        .post('/naji/violationsAggregate', data: {
-      'nationalCode': nationalCode,
-      'mobileNo': mobileNumber,
-      'plateNo': plateNumber,
-    });
-
-    if (response.data['resultStatus'] == 0) {
-      final najiResponse =
-          NajiResponse(resultCode: 0, failures: [], data: response.data);
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
-    } else {
-      final najiResponse = NajiResponse(
-          resultCode: 1,
-          failures: [response.data['resultStatusMessage']],
-          data: {});
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
-    }
-  } else {
-    return mobileNumberError(mobileNumber) ??
-        nationalCodeError(nationalCode) ??
-        plateNumberError(plateNumber) ??
-        Response(520);
+  if (response.statusCode == 200) {
+    return response.data;
   }
+  return null;
 }
 
 Future<Response> violationsImage(Request request) async {
@@ -364,43 +274,21 @@ Future<Response> violationsImage(Request request) async {
   }
 }
 
-Future<Response> vehiclesDocumentsStatus(Request request) async {
-  final bodyString = await request.readAsString();
-  final Map<String, dynamic> body = jsonDecode(bodyString);
+Future<Map<String, dynamic>?> vehiclesDocumentsStatus(
+    {required String nationalCode,
+    required String mobileNumber,
+    required String plateNumber}) async {
+  final response = await NajiNetworkModule.instance.dio
+      .post('/naji/vehiclesDocumentsStatus', data: {
+    'nationalCode': nationalCode,
+    'mobileNo': mobileNumber,
+    'plateNo': plateNumber,
+  });
 
-  final String? nationalCode = body['nationalCode'];
-  final String? mobileNumber = body['mobileNumber'];
-  final String? plateNumber = body['plateNumber'];
-
-  if (mobileNumberError(mobileNumber) == null &&
-      nationalCodeError(nationalCode) == null &&
-      plateNumberError(plateNumber) == null) {
-    final response = await NajiNetworkModule.instance.dio
-        .post('/naji/vehiclesDocumentsStatus', data: {
-      'nationalCode': nationalCode,
-      'mobileNo': mobileNumber,
-      'plateNo': plateNumber,
-    });
-
-    if (response.data['resultStatus'] == 0) {
-      final najiResponse =
-          NajiResponse(resultCode: 0, failures: [], data: response.data);
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
-    } else {
-      final najiResponse = NajiResponse(
-          resultCode: 1,
-          failures: [response.data['resultStatusMessage']],
-          data: {});
-      return Response.ok(najiResponse.getJson(),
-          headers: {"Content-Type": "application/json"});
-    }
-  } else {
-    return mobileNumberError(mobileNumber) ??
-        nationalCodeError(nationalCode) ??
-        plateNumberError(plateNumber) ??
-        Response(520);
+  if (response.statusCode == 200) {
+    return response.data;
   }
+  return null;
 }
 
 Response? nationalCodeError(String? nationalCode) {

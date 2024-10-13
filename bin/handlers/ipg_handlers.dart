@@ -52,7 +52,7 @@ Future<Response> payment(Request request) async {
   final localDate = await IpgNetworkModule.instance.dio.get('/v1/Time');
   final String refId;
   final String localInvoiceId =
-      DateTime.now().millisecondsSinceEpoch.toString();
+      '65';
 
   try {
     final response =
@@ -172,6 +172,7 @@ Future<Response> callback(Request request) async {
       }
       final najiStatus = await doNajiRequest(invoice);
       if (najiStatus != 0) {
+        ///-1 also comes here, which means HTTP result to naji services was NOT 200!
         //TODO: reverse, cancel
         //TODO: html failure
         final failureHtml = '''
@@ -234,29 +235,52 @@ Future<Response> callback(Request request) async {
 }
 
 Future<int> doNajiRequest(InvoiceData invoice) async {
+  final Map<String,dynamic>? result;
   switch (invoice.serviceId) {
     case '1':
-      break;
+       result = await negativePoint(
+        mobileNumber: invoice.mobileNumber!,
+        nationalCode: invoice.nationalCode!,
+        licenseNumber: invoice.licenseNumber!,
+      );
+
     case '2':
-      break;
-    case '3':
-      final result = await drivingLicences(
+       result = await licensePlates(
         mobileNumber: invoice.mobileNumber!,
         nationalCode: invoice.nationalCode!,
       );
-      InvoiceRepository.instance?.update(invoice.refId??'-1', InvoiceData(najiResult: invoice.najiResult));
-      return result?['resultStatus'] ?? -1;
+
+    case '3':
+       result = await drivingLicences(
+        mobileNumber: invoice.mobileNumber!,
+        nationalCode: invoice.nationalCode!,
+      );
+
     case '4':
-      break;
+       result = await vehiclesViolations(
+        mobileNumber: invoice.mobileNumber!,
+        nationalCode: invoice.nationalCode!,
+        plateNumber: invoice.plateNumber!,
+      );
+
     case '5':
-      break;
+      result = await violationsAggregate(
+        mobileNumber: invoice.mobileNumber!,
+        nationalCode: invoice.nationalCode!,
+        plateNumber: invoice.plateNumber!,
+      );
+
     case '6':
-      break;
+      result = await vehiclesDocumentsStatus(
+        mobileNumber: invoice.mobileNumber!,
+        nationalCode: invoice.nationalCode!,
+        plateNumber: invoice.plateNumber!,
+      );
     default:
-      break;
+      result=null;
   }
-  //TODO: remove it.
-  return 1;
+  InvoiceRepository.instance?.update(invoice.refId??'-1', InvoiceData(najiResult: jsonEncode(result)));
+  return result?['resultStatus'] ?? -1;
 }
 
 Future<Response> serviceResult(Request request) async {
