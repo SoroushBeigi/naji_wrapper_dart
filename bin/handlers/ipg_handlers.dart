@@ -48,11 +48,13 @@ Future<Response> payment(Request request) async {
 
   final localDate = await IpgNetworkModule.instance.dio.get('/v1/Time');
   final String refId;
+  final String localInvoiceId = DateTime.now().microsecondsSinceEpoch.toString();
+
  try{
    final response = await IpgNetworkModule.instance.dio.post('/v1/Token', data: {
      'merchantConfigurationId': 227609,
      'serviceTypeId': 1,
-     'localInvoiceId': DateTime.now().millisecondsSinceEpoch,
+     'localInvoiceId': localInvoiceId,
      'amountInRials': amount,
      'localDate': localDate.data,
      'additionalData': '',
@@ -77,6 +79,8 @@ Future<Response> payment(Request request) async {
       licenseNumber: licenseNumber,
       plateNumber: plateNumber,
       serviceId: serviceId,
+      localInvoiceId: localInvoiceId,
+      localDate:localDate.data,
     ));
     final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
       'refId': refId,

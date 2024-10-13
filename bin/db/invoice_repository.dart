@@ -34,13 +34,15 @@ class InvoiceRepository
     // String query = 'INSERT INTO invoices (';
     final result = await connection.execute(
       Sql.named(
-          'INSERT INTO invoices (refId, serviceId, plateNumber, licenseNumber, userId) VALUES (@refId, @serviceId, @plateNumber, @licenseNumber, @userId)'),
+          'INSERT INTO invoices (refId, serviceId, plateNumber, licenseNumber, userId, localInvoiceId, localDate) VALUES (@refId, @serviceId, @plateNumber, @licenseNumber, @userId, @localInvoiceId, @localDate)'),
       parameters: {
         'refId': invoiceData.refId,
         'serviceId': invoiceData.serviceId,
         'plateNumber': invoiceData.plateNumber,
         'licenseNumber': invoiceData.licenseNumber,
         'userId': invoiceData.userId,
+        'localInvoiceId': invoiceData.localInvoiceId,
+        'localDate': invoiceData.localDate,
       },
     );
   }

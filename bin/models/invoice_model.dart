@@ -2,7 +2,7 @@ class InvoiceData {
   final int? id;
 
   //Needed for writing into database
-  final String? refId, serviceId, plateNumber, licenseNumber;
+  final String? refId, serviceId, plateNumber, licenseNumber, localInvoiceId,localDate;
   final String? userId;
 
   //Populated by triggers, not needed for writing
@@ -18,6 +18,8 @@ class InvoiceData {
     this.plateNumber,
     this.licenseNumber,
     this.serviceName,
+    this.localInvoiceId,
+    this.localDate,
   });
 
   Map<String, dynamic> getFields() {
@@ -31,6 +33,8 @@ class InvoiceData {
       "mobileNumber": mobileNumber,
       "plateNumber": plateNumber,
       "licenseNumber": licenseNumber,
+      "localInvoiceId": localInvoiceId,
+      "localDate":localDate,
     };
   }
 }
