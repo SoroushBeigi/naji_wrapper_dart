@@ -14,7 +14,13 @@ class InvoiceData {
   final String? nationalCode, mobileNumber, serviceName;
 
   //Comes after callback
-  final String? rrn, payGateTranID, amount, cardNumber,payGateTranDate;
+  final String? rrn,
+      payGateTranID,
+      amount,
+      cardNumber,
+      payGateTranDate,
+      serviceStatusCode;
+  final String? najiResult;
 
   InvoiceData({
     this.id,
@@ -33,6 +39,8 @@ class InvoiceData {
     this.amount,
     this.cardNumber,
     this.payGateTranDate,
+    this.serviceStatusCode,
+    this.najiResult,
   });
 
   Map<String, dynamic> getFields() {
@@ -48,11 +56,13 @@ class InvoiceData {
       "licenseNumber": licenseNumber,
       "localInvoiceId": localInvoiceId,
       "localDate": localDate,
-      "rrn":rrn,
-      "payGateTranID":payGateTranID,
-      "amount":amount,
-      "cardNumber":cardNumber,
-      "payGateTranDate":payGateTranDate,
+      "rrn": rrn,
+      "payGateTranID": payGateTranID,
+      "amount": amount,
+      "cardNumber": cardNumber,
+      "payGateTranDate": payGateTranDate,
+      "serviceStatusCode": serviceStatusCode,
+      "najiResult":najiResult,
     };
   }
 }

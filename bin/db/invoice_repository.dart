@@ -53,10 +53,67 @@ class InvoiceRepository
     throw UnimplementedError();
   }
 
+  Future<InvoiceData?> getByRefId(String refId) async {
+    final result = await connection.execute(
+      Sql.named(
+          "SELECT * FROM invoices WHERE refId=@refId AND isDeleted=false"),
+      parameters: {'refId': refId},
+    );
+    if (result.isEmpty) {
+      return null;
+    }
+    return InvoiceData(
+      id: int.parse(result[0][0].toString()),
+      refId: result[0][1].toString(),
+      nationalCode: result[0][2].toString(),
+      serviceId: result[0][3].toString(),
+      serviceName: result[0][4].toString(),
+      mobileNumber: result[0][5].toString(),
+      plateNumber: result[0][6].toString(),
+      licenseNumber: result[0][7].toString(),
+      userId: result[0][8].toString(),
+      localInvoiceId: result[0][12].toString(),
+      localDate: result[0][13].toString(),
+      rrn: result[0][14].toString(),
+      payGateTranID: result[0][15].toString(),
+      amount: result[0][16].toString(),
+      cardNumber: result[0][17].toString(),
+      payGateTranDate: result[0][18].toString(),
+      serviceStatusCode: result[0][19].toString(),
+      najiResult: result[0][20].toString(),
+    );
+  }
+
   @override
-  Future<InvoiceData?> getById(String id) {
-    // TODO: implement getById
-    throw UnimplementedError();
+  Future<InvoiceData?> getById(String localInvoiceId) async {
+    final result = await connection.execute(
+      Sql.named(
+          "SELECT * FROM invoices WHERE localInvoiceId=@localInvoiceId AND isDeleted=false"),
+      parameters: {'localInvoiceId': localInvoiceId},
+    );
+    if (result.isEmpty) {
+      return null;
+    }
+    return InvoiceData(
+      id: int.parse(result[0][0].toString()),
+      refId: result[0][1].toString(),
+      nationalCode: result[0][2].toString(),
+      serviceId: result[0][3].toString(),
+      serviceName: result[0][4].toString(),
+      mobileNumber: result[0][5].toString(),
+      plateNumber: result[0][6].toString(),
+      licenseNumber: result[0][7].toString(),
+      userId: result[0][8].toString(),
+      localInvoiceId: result[0][12].toString(),
+      localDate: result[0][13].toString(),
+      rrn: result[0][14].toString(),
+      payGateTranID: result[0][15].toString(),
+      amount: result[0][16].toString(),
+      cardNumber: result[0][17].toString(),
+      payGateTranDate: result[0][18].toString(),
+      serviceStatusCode: result[0][19].toString(),
+      najiResult: result[0][20].toString(),
+    );
   }
 
   @override
@@ -65,18 +122,18 @@ class InvoiceRepository
     throw UnimplementedError();
   }
 
-
   @override
-  Future<void> update(String refId, InvoiceData model) async{
+  Future<void> update(String refId, InvoiceData model) async {
     final result = await connection.execute(
       Sql.named(
-          "UPDATE invoices SET rrn=@rrn, payGateTranID=@payGateTranID, amount=@amount, cardNumber=@cardNumber, payGateTranDate=@payGateTranDate WHERE refId=@refId"),
+          "UPDATE invoices SET rrn=@rrn, payGateTranID=@payGateTranID, amount=@amount, cardNumber=@cardNumber, payGateTranDate=@payGateTranDate, serviceStatusCode=@serviceStatusCode WHERE refId=@refId"),
       parameters: {
         'rrn': model.rrn,
         'payGateTranID': model.payGateTranID,
         'amount': model.amount,
         'cardNumber': model.cardNumber,
         'payGateTranDate': model.payGateTranDate,
+        'serviceStatusCode': model.serviceStatusCode,
         'refId': refId
       },
     );
