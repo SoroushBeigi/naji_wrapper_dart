@@ -2,11 +2,19 @@ class InvoiceData {
   final int? id;
 
   //Needed for writing into database
-  final String? refId, serviceId, plateNumber, licenseNumber, localInvoiceId,localDate;
+  final String? refId,
+      serviceId,
+      plateNumber,
+      licenseNumber,
+      localInvoiceId,
+      localDate;
   final String? userId;
 
   //Populated by triggers, not needed for writing
   final String? nationalCode, mobileNumber, serviceName;
+
+  //Comes after callback
+  final String? rrn, payGateTranID, amount, cardNumber,payGateTranDate;
 
   InvoiceData({
     this.id,
@@ -20,6 +28,11 @@ class InvoiceData {
     this.serviceName,
     this.localInvoiceId,
     this.localDate,
+    this.rrn,
+    this.payGateTranID,
+    this.amount,
+    this.cardNumber,
+    this.payGateTranDate,
   });
 
   Map<String, dynamic> getFields() {
@@ -34,7 +47,12 @@ class InvoiceData {
       "plateNumber": plateNumber,
       "licenseNumber": licenseNumber,
       "localInvoiceId": localInvoiceId,
-      "localDate":localDate,
+      "localDate": localDate,
+      "rrn":rrn,
+      "payGateTranID":payGateTranID,
+      "amount":amount,
+      "cardNumber":cardNumber,
+      "payGateTranDate":payGateTranDate,
     };
   }
 }

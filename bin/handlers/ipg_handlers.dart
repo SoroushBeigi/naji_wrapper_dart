@@ -7,6 +7,7 @@ import '../clients/ipg_client.dart';
 import '../db/service_repository.dart';
 import '../db/invoice_repository.dart';
 import '../models/invoice_model.dart';
+import '../constants.dart';
 
 Future<Response> time(Request request) async {
   final response = await IpgNetworkModule.instance.dio.get('/v1/Time');
@@ -48,47 +49,56 @@ Future<Response> payment(Request request) async {
 
   final localDate = await IpgNetworkModule.instance.dio.get('/v1/Time');
   final String refId;
-  final String localInvoiceId = DateTime.now().microsecondsSinceEpoch.toString();
+  final String localInvoiceId =
+      DateTime.now().microsecondsSinceEpoch.toString();
 
- try{
-   final response = await IpgNetworkModule.instance.dio.post('/v1/Token', data: {
-     'merchantConfigurationId': 227609,
-     'serviceTypeId': 1,
-     'localInvoiceId': localInvoiceId,
-     'amountInRials': amount,
-     'localDate': localDate.data,
-     'additionalData': '',
-     "callbackURL": "eks://emdad.behpardaz.net/payment-result",
-     "paymentId": "0"
-   });
-   if(response.statusCode.toString()[0]!='2'){
-     return Response.ok(
-         NajiResponse(resultCode: 1, failures: ['خطای سرویس آسان پرداخت'],data: {}).getJson(),
-         headers: {"Content-Type": "application/json"});
-   }
-   refId=response.data;
- }catch(e){
-   return Response.ok(
-       NajiResponse(resultCode: 1, failures: ['خطای سرویس آسان پرداخت'],data: {}).getJson(),
-       headers: {"Content-Type": "application/json"});
- }
-
-    InvoiceRepository.instance?.write(InvoiceData(
-      refId: refId,
-      userId: userId,
-      licenseNumber: licenseNumber,
-      plateNumber: plateNumber,
-      serviceId: serviceId,
-      localInvoiceId: localInvoiceId,
-      localDate:localDate.data,
-    ));
-    final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
-      'refId': refId,
-      'callbackURL': 'eks://emdad.behpardaz.net/payment-result',
+  try {
+    final response =
+        await IpgNetworkModule.instance.dio.post('/v1/Token', data: {
+      'merchantConfigurationId': Constants.merchantConfigurationId,
+      'serviceTypeId': 1,
+      'localInvoiceId': localInvoiceId,
+      'amountInRials': amount,
+      'localDate': localDate.data,
+      'additionalData': '',
+      "callbackURL":
+          "http://${Constants.baseUrl}:${Constants.port}/callback?localInvoiceId=$localInvoiceId",
+      "paymentId": "0"
     });
-    return Response.ok(najiResponse.getJson(),
+    if (response.statusCode.toString()[0] != '2') {
+      return Response.ok(
+          NajiResponse(
+              resultCode: 1,
+              failures: ['خطای سرویس آسان پرداخت'],
+              data: {}).getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
+    refId = response.data;
+  } catch (e) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            failures: ['خطای سرویس آسان پرداخت'],
+            data: {}).getJson(),
         headers: {"Content-Type": "application/json"});
+  }
 
+  InvoiceRepository.instance?.write(InvoiceData(
+    refId: refId,
+    userId: userId,
+    licenseNumber: licenseNumber,
+    plateNumber: plateNumber,
+    serviceId: serviceId,
+    localInvoiceId: localInvoiceId,
+    localDate: localDate.data,
+  ));
+  final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
+    'refId': refId,
+    'callbackURL':
+        'eks://emdad.behpardaz.net/payment-result?localInvoiceId=$localInvoiceId',
+  });
+  return Response.ok(najiResponse.getJson(),
+      headers: {"Content-Type": "application/json"});
 
   // final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
   //   "callbackURL": "eks://emdad.behpardaz.net/payment-result",
@@ -104,7 +114,7 @@ Future<Response> paymentGateway(Request request) async {
   if (refId == null) {
     return Response.notFound('یافت نشد RefId');
   }
-
+//TODO: TEST and add mobile number
   var htmlContent = '''
     <!DOCTYPE html>
     <html>
@@ -123,4 +133,33 @@ Future<Response> paymentGateway(Request request) async {
   return Response.ok(htmlContent, headers: {
     HttpHeaders.contentTypeHeader: 'text/html',
   });
+}
+
+Future<Response> callback(Request request) async {
+  final localInvoiceId = request.url.queryParameters['localInvoiceId'];
+  try {
+    final tranResult =
+        await IpgNetworkModule.instance.dio.post('/v1/TranResult', data: {
+      'merchantConfigurationId': Constants.merchantConfigurationId,
+      'localInvoiceId': localInvoiceId,
+    });
+    InvoiceRepository.instance?.update(
+      tranResult.data['refID'],
+      InvoiceData(
+        rrn: tranResult.data['rrn'],
+        payGateTranID: tranResult.data['payGateTranID'],
+        amount: tranResult.data['amount'],
+        cardNumber: tranResult.data['cardNumber'],
+        payGateTranDate: tranResult.data['payGateTranDate'],
+      ),
+    );
+    return Response.ok({}, headers: {});
+  } catch (e) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            failures: ['خطای سرویس آسان پرداخت'],
+            data: {}).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
 }

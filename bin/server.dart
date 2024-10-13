@@ -7,6 +7,7 @@ import 'router.dart';
 import 'db/service_repository.dart';
 import 'db/invoice_repository.dart';
 import 'db/user_repository.dart';
+import 'constants.dart';
 
 // const PORT='8080';
 // const DB_PORT='5432';
@@ -43,7 +44,7 @@ void main() async {
 
   var connection = await Connection.open(Endpoint(
     port: 5432,
-    host: "172.16.4.146" ,
+    host: Constants.dbHost ,
     database: 'naji_db' ,
     username: 'wrapper',
     password: 'bpj12345',
@@ -56,7 +57,7 @@ void main() async {
   final handler =
       Pipeline().addMiddleware(logRequests()).addHandler(router.router.call);
 
-  final port = int.parse('9876');
+  final port = int.parse(Constants.port);
   final server = await serve(handler, ip, port);
   print('Server listening on ip $ip port ${server.port}');
 }

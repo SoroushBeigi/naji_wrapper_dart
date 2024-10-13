@@ -65,9 +65,20 @@ class InvoiceRepository
     throw UnimplementedError();
   }
 
+
   @override
-  Future<void> update(String id, InvoiceData model) {
-    // TODO: implement update
-    throw UnimplementedError();
+  Future<void> update(String refId, InvoiceData model) async{
+    final result = await connection.execute(
+      Sql.named(
+          "UPDATE invoices SET rrn=@rrn, payGateTranID=@payGateTranID, amount=@amount, cardNumber=@cardNumber, payGateTranDate=@payGateTranDate WHERE refId=@refId"),
+      parameters: {
+        'rrn': model.rrn,
+        'payGateTranID': model.payGateTranID,
+        'amount': model.amount,
+        'cardNumber': model.cardNumber,
+        'payGateTranDate': model.payGateTranDate,
+        'refId': refId
+      },
+    );
   }
 }
