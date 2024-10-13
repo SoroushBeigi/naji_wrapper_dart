@@ -111,7 +111,8 @@ Future<Response> payment(Request request) async {
 }
 
 Future<Response> paymentGateway(Request request) async {
-  var refId = request.url.queryParameters['refId'];
+  final refId = request.url.queryParameters['refId'];
+  final mobileNumber = request.url.queryParameters['mobileNumber'];
 
   if (refId == null) {
     return Response.notFound('یافت نشد RefId');
@@ -127,6 +128,7 @@ Future<Response> paymentGateway(Request request) async {
         <p>درحال انتقال به درگاه پرداخت...</p>
         <form id="paymentForm" method="POST" action="https://asan.shaparak.ir">
           <input type="hidden" name="RefId" value="$refId" />
+          ${mobileNumber==null? '' : '<input type="hidden" name="mobileap" value="$mobileNumber" />'}
         </form>
       </body>
     </html>
@@ -242,6 +244,7 @@ Future<int> doNajiRequest(InvoiceData invoice) async {
         mobileNumber: invoice.mobileNumber!,
         nationalCode: invoice.nationalCode!,
       );
+      InvoiceRepository.instance?.update(invoice.refId??'-1', InvoiceData(najiResult: invoice.najiResult));
       return result?['resultStatus'] ?? -1;
     case '4':
       break;
@@ -279,7 +282,7 @@ Future<Response> serviceResult(Request request) async {
             data: {}).getJson(),
         headers: {"Content-Type": "application/json"});
   }
-  final json = jsonDecode(invoice!.najiResult!);
+  final json = jsonDecode(invoice.najiResult!);
   return Response.ok(
       NajiResponse(resultCode: 0, failures: [], data: {
         'negativePoint': invoice.serviceId == '1' ? json[['result']] : {},

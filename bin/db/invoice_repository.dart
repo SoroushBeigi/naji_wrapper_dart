@@ -124,6 +124,16 @@ class InvoiceRepository
 
   @override
   Future<void> update(String refId, InvoiceData model) async {
+    if(model.najiResult!=null){
+      final result = await connection.execute(
+        Sql.named(
+            "UPDATE invoices SET najiResult=@najiResult WHERE refId=@refId"),
+        parameters: {
+          'najiResult': model.najiResult,
+          'refId': refId
+        },
+      );
+    }
     final result = await connection.execute(
       Sql.named(
           "UPDATE invoices SET rrn=@rrn, payGateTranID=@payGateTranID, amount=@amount, cardNumber=@cardNumber, payGateTranDate=@payGateTranDate, serviceStatusCode=@serviceStatusCode WHERE refId=@refId"),
