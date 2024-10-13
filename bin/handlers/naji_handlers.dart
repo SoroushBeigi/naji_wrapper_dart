@@ -112,6 +112,15 @@ Future<Response> verifyOtp(Request request) async {
       'otp': otp,
     });
     if (response.data['resultStatus'] == 0) {
+      await UserRepository.instance?.saveUserInDb(
+        UserModel(
+          guid: guid,
+          firstName: firstName,
+          lastName: lastName,
+          mobileNumber: mobileNumber,
+          nationalCode: nationalCode,
+        ),
+      );
       final najiResponse = NajiResponse(
           resultCode: 0,
           failures: [],
