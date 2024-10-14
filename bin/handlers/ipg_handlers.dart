@@ -11,6 +11,24 @@ import '../models/invoice_model.dart';
 import '../constants.dart';
 import 'naji_handlers.dart';
 
+const failureHtml = '''
+      <!DOCTYPE html>
+    <html>
+      <head>
+        <title>نتیجه تراکنش</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+          .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+          .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+        </style>
+      </head>
+      <body>
+          <h1>عملیات ناموفق</h1>
+          <p>تراکنش انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.</p>
+      </body>
+    </html>
+    ''';
+
 Future<Response> time(Request request) async {
   final response = await IpgNetworkModule.instance.dio.get('/v1/Time');
   final najiResponse =
@@ -51,8 +69,7 @@ Future<Response> payment(Request request) async {
 
   final localDate = await IpgNetworkModule.instance.dio.get('/v1/Time');
   final String refId;
-  final String localInvoiceId =
-      '65';
+  final localInvoiceId = DateTime.now().microsecondsSinceEpoch;
 
   try {
     final response =
@@ -61,27 +78,25 @@ Future<Response> payment(Request request) async {
       'serviceTypeId': 1,
       'localInvoiceId': localInvoiceId,
       'amountInRials': amount,
-      'localDate': localDate.data,
+      'localDate': localDate.data.toString(),
       'additionalData': '',
       "callbackURL":
-          "http://${Constants.baseUrl}:${Constants.port}/callback?localInvoiceId=$localInvoiceId",
+          "http://emdad.behpardaz.net/payment-result?localInvoiceId=$localInvoiceId",
       "paymentId": "0"
     });
     if (response.statusCode.toString()[0] != '2') {
       return Response.ok(
-          NajiResponse(
-              resultCode: 1,
-              failures: ['سرویس آسان پرداخت در دسترس نیست، پس از مدتی دوباره تلاش کنید'],
-              data: {}).getJson(),
+          NajiResponse(resultCode: 1, failures: [
+            'سرویس آسان پرداخت در دسترس نیست، پس از مدتی دوباره تلاش کنید'
+          ], data: {}).getJson(),
           headers: {"Content-Type": "application/json"});
     }
     refId = response.data;
   } catch (e) {
     return Response.ok(
-        NajiResponse(
-            resultCode: 1,
-            failures: ['سرویس آسان پرداخت در دسترس نیست، پس از مدتی دوباره تلاش کنید'],
-            data: {}).getJson(),
+        NajiResponse(resultCode: 1, failures: [
+          'سرویس آسان پرداخت در دسترس نیست، پس از مدتی دوباره تلاش کنید'
+        ], data: {}).getJson(),
         headers: {"Content-Type": "application/json"});
   }
 
@@ -91,7 +106,7 @@ Future<Response> payment(Request request) async {
     licenseNumber: licenseNumber,
     plateNumber: plateNumber,
     serviceId: serviceId,
-    localInvoiceId: localInvoiceId,
+    localInvoiceId: localInvoiceId.toString(),
     localDate: localDate.data,
   ));
   final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
@@ -128,7 +143,7 @@ Future<Response> paymentGateway(Request request) async {
         <p>درحال انتقال به درگاه پرداخت...</p>
         <form id="paymentForm" method="POST" action="https://asan.shaparak.ir">
           <input type="hidden" name="RefId" value="$refId" />
-          ${mobileNumber==null? '' : '<input type="hidden" name="mobileap" value="$mobileNumber" />'}
+          ${mobileNumber == null ? '' : '<input type="hidden" name="mobileap" value="$mobileNumber" />'}
         </form>
       </body>
     </html>
@@ -142,14 +157,20 @@ Future<Response> paymentGateway(Request request) async {
 Future<Response> callback(Request request) async {
   final localInvoiceId = request.url.queryParameters['localInvoiceId'];
   try {
-    final tranResult =
-        await IpgNetworkModule.instance.dio.post('/v1/TranResult', data: {
+    final tranResult = await IpgNetworkModule.instance.dio
+        .get('/v1/TranResult', queryParameters: {
       'merchantConfigurationId': Constants.merchantConfigurationId,
-      'localInvoiceId': localInvoiceId,
+      'localInvoiceId': int.parse(localInvoiceId ?? ''),
     });
+    if (tranResult.statusCode == 472) {
+      return Response.ok(failureHtml, headers: {
+        HttpHeaders.contentTypeHeader: 'text/html',
+      });
+    }
     InvoiceRepository.instance?.update(
       tranResult.data['refID'],
       InvoiceData(
+        ipgRefId: tranResult.data['refID'],
         rrn: tranResult.data['rrn'],
         payGateTranID: tranResult.data['payGateTranID'],
         amount: tranResult.data['amount'],
@@ -175,16 +196,16 @@ Future<Response> callback(Request request) async {
         ///-1 also comes here, which means HTTP result to naji services was NOT 200!
         //TODO: reverse, cancel
         //TODO: html failure
-        final failureHtml = '''
-    <!DOCTYPE html>
-    <html>
-    </html>
-    ''';
+
         return Response.ok(failureHtml, headers: {
           HttpHeaders.contentTypeHeader: 'text/html',
         });
       } else {
-        //TODO: verify, settlement
+        final verifyResult =
+            await IpgNetworkModule.instance.dio.post('/v1/Verify', data: {
+          'merchantConfigurationId': Constants.merchantConfigurationId,
+          'payGateTranId': int.parse(tranResult.data['payGateTranID']),
+        });
         var successHtml = '''
     <!DOCTYPE html>
     <html>
@@ -212,22 +233,12 @@ Future<Response> callback(Request request) async {
     } else {
       //failure
       //TODO
-      final failureHtml = '''
-    <!DOCTYPE html>
-    <html>
-    </html>
-    ''';
       return Response.ok(failureHtml, headers: {
         HttpHeaders.contentTypeHeader: 'text/html',
       });
     }
   } catch (e) {
     //TODO: HTML failure for Asan Pardakht
-    final failureHtml = '''
-    <!DOCTYPE html>
-    <html>
-    </html>
-    ''';
     return Response.ok(failureHtml, headers: {
       HttpHeaders.contentTypeHeader: 'text/html',
     });
@@ -235,29 +246,29 @@ Future<Response> callback(Request request) async {
 }
 
 Future<int> doNajiRequest(InvoiceData invoice) async {
-  final Map<String,dynamic>? result;
+  final Map<String, dynamic>? result;
   switch (invoice.serviceId) {
     case '1':
-       result = await negativePoint(
+      result = await negativePoint(
         mobileNumber: invoice.mobileNumber!,
         nationalCode: invoice.nationalCode!,
         licenseNumber: invoice.licenseNumber!,
       );
 
     case '2':
-       result = await licensePlates(
+      result = await licensePlates(
         mobileNumber: invoice.mobileNumber!,
         nationalCode: invoice.nationalCode!,
       );
 
     case '3':
-       result = await drivingLicences(
+      result = await drivingLicences(
         mobileNumber: invoice.mobileNumber!,
         nationalCode: invoice.nationalCode!,
       );
 
     case '4':
-       result = await vehiclesViolations(
+      result = await vehiclesViolations(
         mobileNumber: invoice.mobileNumber!,
         nationalCode: invoice.nationalCode!,
         plateNumber: invoice.plateNumber!,
@@ -277,9 +288,10 @@ Future<int> doNajiRequest(InvoiceData invoice) async {
         plateNumber: invoice.plateNumber!,
       );
     default:
-      result=null;
+      result = null;
   }
-  InvoiceRepository.instance?.update(invoice.refId??'-1', InvoiceData(najiResult: jsonEncode(result)));
+  InvoiceRepository.instance?.update(
+      invoice.refId ?? '-1', InvoiceData(najiResult: jsonEncode(result)));
   return result?['resultStatus'] ?? -1;
 }
 
@@ -298,7 +310,7 @@ Future<Response> serviceResult(Request request) async {
   }
 
   final invoice = await InvoiceRepository.instance?.getByRefId(refId);
-  if(invoice==null){
+  if (invoice == null) {
     return Response.ok(
         NajiResponse(
             resultCode: 1,
@@ -307,15 +319,63 @@ Future<Response> serviceResult(Request request) async {
         headers: {"Content-Type": "application/json"});
   }
   final json = jsonDecode(invoice.najiResult!);
-  return Response.ok(
-      NajiResponse(resultCode: 0, failures: [], data: {
-        'negativePoint': invoice.serviceId == '1' ? json[['result']] : {},
-        'licensePlates': invoice.serviceId == '2' ? json[['result']] : {},
-        'drivingLicences': invoice.serviceId == '3' ? json[['result']] : {},
-        'vehiclesViolations': invoice.serviceId == '4' ? json[['result']] : {},
-        'violationsAggregate': invoice.serviceId == '5' ? json[['result']] : {},
-        'vehiclesDocumentsStatus':
-            invoice.serviceId == '6' ? json[['result']] : {},
-      }).getJson(),
-      headers: {"Content-Type": "application/json"});
+  if (json == null || json == {}) {
+    ///TESTING
+    final najiStatus = await doNajiRequest(invoice);
+    final readInvoice =
+        await InvoiceRepository.instance?.getByRefId(invoice.refId ?? '');
+    final newJson = jsonDecode(readInvoice!.najiResult!);
+    if (newJson['resultStatus'] != 0) {
+      return Response.ok(
+          NajiResponse(resultCode: 1, failures: [
+            newJson['resultStatusMessage'] ??
+                'پاسخ مناسب از سرویس ناجی دریافت نشد.'
+          ], data: {}).getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
+    return Response.ok(
+        NajiResponse(resultCode: 0, failures: [], data: {
+          'negativePoint': invoice.serviceId == '1' ? newJson : {},
+          'licensePlates':
+              invoice.serviceId == '2' ? jsonDecode(newJson['result']) : {},
+          'drivingLicences':
+              invoice.serviceId == '3' ? jsonDecode(newJson['result']) : {},
+          'vehiclesViolations':
+              invoice.serviceId == '4' ? jsonDecode(newJson['result']) : {},
+          'violationsAggregate': invoice.serviceId == '5' ? newJson : {},
+          'vehiclesDocumentsStatus': invoice.serviceId == '6' ? newJson : {},
+        }).getJson(),
+        headers: {"Content-Type": "application/json"});
+
+    ///TESTING
+    ///TODO: UNCOMMENT AND COMMENT TESTING ABOVE
+    // return Response.ok(
+    //     NajiResponse(
+    //         resultCode: 1,
+    //         failures: ['تراکنش انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.'],
+    //         data: {}).getJson(),
+    //     headers: {"Content-Type": "application/json"});
+  } else {
+    if (json['resultStatus'] != 0) {
+      return Response.ok(
+          NajiResponse(resultCode: 0, failures: [
+            json['resultStatusMessage'] ??
+                'پاسخ مناسب از سرویس ناجی دریافت نشد.'
+          ], data: {}).getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
+    return Response.ok(
+        NajiResponse(resultCode: 0, failures: [], data: {
+          'negativePoint': invoice.serviceId == '1' ? json : {},
+          'licensePlates':
+              invoice.serviceId == '2' ? jsonDecode(json['result']) : {},
+          'drivingLicences':
+              invoice.serviceId == '3' ? jsonDecode(json['result']) : {},
+          'vehiclesViolations':
+              invoice.serviceId == '4' ? jsonDecode(json['result']) : {},
+          'violationsAggregate': invoice.serviceId == '5' ? json : {},
+          'vehiclesDocumentsStatus': invoice.serviceId == '6' ? json : {},
+        }).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
 }

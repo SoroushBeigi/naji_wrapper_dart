@@ -133,19 +133,22 @@ class InvoiceRepository
           'refId': refId
         },
       );
+    }else{
+      final result = await connection.execute(
+        Sql.named(
+            "UPDATE invoices SET rrn=@rrn, payGateTranID=@payGateTranID, amount=@amount, ipgRefId=@ipgRefId, cardNumber=@cardNumber, payGateTranDate=@payGateTranDate, serviceStatusCode=@serviceStatusCode WHERE refId=@refId"),
+        parameters: {
+          'rrn': model.rrn,
+          'payGateTranID': model.payGateTranID,
+          'amount': model.amount,
+          'ipgRefId': model.ipgRefId,
+          'cardNumber': model.cardNumber,
+          'payGateTranDate': model.payGateTranDate,
+          'serviceStatusCode': model.serviceStatusCode,
+          'refId': refId
+        },
+      );
     }
-    final result = await connection.execute(
-      Sql.named(
-          "UPDATE invoices SET rrn=@rrn, payGateTranID=@payGateTranID, amount=@amount, cardNumber=@cardNumber, payGateTranDate=@payGateTranDate, serviceStatusCode=@serviceStatusCode WHERE refId=@refId"),
-      parameters: {
-        'rrn': model.rrn,
-        'payGateTranID': model.payGateTranID,
-        'amount': model.amount,
-        'cardNumber': model.cardNumber,
-        'payGateTranDate': model.payGateTranDate,
-        'serviceStatusCode': model.serviceStatusCode,
-        'refId': refId
-      },
-    );
+
   }
 }

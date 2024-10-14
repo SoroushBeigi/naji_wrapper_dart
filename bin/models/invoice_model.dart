@@ -19,7 +19,7 @@ class InvoiceData {
       amount,
       cardNumber,
       payGateTranDate,
-      serviceStatusCode;
+      serviceStatusCode,ipgRefId;
   final String? najiResult;
 
   InvoiceData({
@@ -41,6 +41,7 @@ class InvoiceData {
     this.payGateTranDate,
     this.serviceStatusCode,
     this.najiResult,
+    this.ipgRefId,
   });
 
   Map<String, dynamic> getFields() {
@@ -63,6 +64,7 @@ class InvoiceData {
       "payGateTranDate": payGateTranDate,
       "serviceStatusCode": serviceStatusCode,
       "najiResult":najiResult,
+      "ipgRefId":ipgRefId,
     };
   }
 }
