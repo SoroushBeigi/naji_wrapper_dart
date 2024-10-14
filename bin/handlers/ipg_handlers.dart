@@ -321,40 +321,40 @@ Future<Response> serviceResult(Request request) async {
   final json = jsonDecode(invoice.najiResult!);
   if (json == null || json == {}) {
     ///TESTING
-    final najiStatus = await doNajiRequest(invoice);
-    final readInvoice =
-        await InvoiceRepository.instance?.getByRefId(invoice.refId ?? '');
-    final newJson = jsonDecode(readInvoice!.najiResult!);
-    if (newJson['resultStatus'] != 0) {
-      return Response.ok(
-          NajiResponse(resultCode: 1, failures: [
-            newJson['resultStatusMessage'] ??
-                'پاسخ مناسب از سرویس ناجی دریافت نشد.'
-          ], data: {}).getJson(),
-          headers: {"Content-Type": "application/json"});
-    }
-    return Response.ok(
-        NajiResponse(resultCode: 0, failures: [], data: {
-          'negativePoint': invoice.serviceId == '1' ? newJson : {},
-          'licensePlates':
-              invoice.serviceId == '2' ? jsonDecode(newJson['result']) : {},
-          'drivingLicences':
-              invoice.serviceId == '3' ? jsonDecode(newJson['result']) : {},
-          'vehiclesViolations':
-              invoice.serviceId == '4' ? jsonDecode(newJson['result']) : {},
-          'violationsAggregate': invoice.serviceId == '5' ? newJson : {},
-          'vehiclesDocumentsStatus': invoice.serviceId == '6' ? newJson : {},
-        }).getJson(),
-        headers: {"Content-Type": "application/json"});
-
-    ///TESTING
-    ///TODO: UNCOMMENT AND COMMENT TESTING ABOVE
+    // final najiStatus = await doNajiRequest(invoice);
+    // final readInvoice =
+    //     await InvoiceRepository.instance?.getByRefId(invoice.refId ?? '');
+    // final newJson = jsonDecode(readInvoice!.najiResult!);
+    // if (newJson['resultStatus'] != 0) {
+    //   return Response.ok(
+    //       NajiResponse(resultCode: 1, failures: [
+    //         newJson['resultStatusMessage'] ??
+    //             'پاسخ مناسب از سرویس ناجی دریافت نشد.'
+    //       ], data: {}).getJson(),
+    //       headers: {"Content-Type": "application/json"});
+    // }
     // return Response.ok(
-    //     NajiResponse(
-    //         resultCode: 1,
-    //         failures: ['تراکنش انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.'],
-    //         data: {}).getJson(),
+    //     NajiResponse(resultCode: 0, failures: [], data: {
+    //       'negativePoint': invoice.serviceId == '1' ? newJson : {},
+    //       'licensePlates':
+    //           invoice.serviceId == '2' ? jsonDecode(newJson['result']) : {},
+    //       'drivingLicences':
+    //           invoice.serviceId == '3' ? jsonDecode(newJson['result']) : {},
+    //       'vehiclesViolations':
+    //           invoice.serviceId == '4' ? jsonDecode(newJson['result']) : {},
+    //       'violationsAggregate': invoice.serviceId == '5' ? newJson : {},
+    //       'vehiclesDocumentsStatus': invoice.serviceId == '6' ? newJson : {},
+    //     }).getJson(),
     //     headers: {"Content-Type": "application/json"});
+    //
+    // ///TESTING
+    // ///TODO: UNCOMMENT AND COMMENT TESTING ABOVE
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            failures: ['تراکنش انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.'],
+            data: {}).getJson(),
+        headers: {"Content-Type": "application/json"});
   } else {
     if (json['resultStatus'] != 0) {
       return Response.ok(
