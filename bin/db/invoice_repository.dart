@@ -2,6 +2,7 @@ import 'package:postgres/postgres.dart';
 
 import '../models/invoice_model.dart';
 import 'db_mixins.dart';
+import '../utils/datetime_to_timestamp.dart';
 
 class InvoiceRepository
     with
@@ -34,15 +35,27 @@ class InvoiceRepository
     // String query = 'INSERT INTO invoices (';
     final result = await connection.execute(
       Sql.named(
-          'INSERT INTO invoices (refId, serviceId, plateNumber, licenseNumber, userId, localInvoiceId, localDate) VALUES (@refId, @serviceId, @plateNumber, @licenseNumber, @userId, @localInvoiceId, @localDate)'),
+          'INSERT INTO invoices (redirect_url, request_referenceid, order_type, tag2, tag1, paymenter_email, order_desc, order_datetime , paymenter_mobile, paymenter_natcode, paymenter_name, requestpay_datetime, requestpay_req_json, requestpay_res_json, requestpay_status, requestpay_msg, requestpay_result) VALUES (@callbackUrl, @refId, @serviceId, @plateNumber, @licenseNumber, @userId, @localInvoiceId, @localDate, @mobileNumber, @nationalCode, @name, @requestpay_datetime, @requestpay_req_json, @requestpay_res_json, @requestpay_status, @requestpay_msg, @requestpay_result)'),
       parameters: {
+        'callbackUrl': invoiceData.callbackUrl,
         'refId': invoiceData.refId,
         'serviceId': invoiceData.serviceId,
         'plateNumber': invoiceData.plateNumber,
         'licenseNumber': invoiceData.licenseNumber,
         'userId': invoiceData.userId,
         'localInvoiceId': invoiceData.localInvoiceId,
-        'localDate': invoiceData.localDate,
+        'localDate':
+            localDateToTimestamp(invoiceData.localDate ?? '00000000 000000'),
+        'mobileNumber': invoiceData.mobileNumber,
+        'nationalCode': invoiceData.nationalCode,
+        'name': invoiceData.name,
+        'requestpay_datetime': dateTimeToTimestamp(
+            invoiceData.requestpay_datetime ?? DateTime(2000)),
+        'requestpay_req_json': invoiceData.requestpay_req_json,
+        'requestpay_res_json': invoiceData.requestpay_res_json,
+        'requestpay_status': invoiceData.requestpay_status,
+        'requestpay_msg': invoiceData.requestpay_msg,
+        'requestpay_result': invoiceData.requestpay_result,
       },
     );
   }
@@ -56,7 +69,7 @@ class InvoiceRepository
   Future<List<InvoiceData>?> getAllForUser(String guid) async {
     final result = await connection.execute(
         Sql.named(
-            "SELECT refId, serviceName, rrn, localDate, najiResult FROM invoices WHERE isDeleted=false AND userId = @guid"),
+            "SELECT request_referenceid, tag3, tracking_code, order_datetime, extra_data FROM invoices WHERE userId = @guid"),
         parameters: {'guid': guid});
     if (result.isEmpty) {
       return null;
@@ -76,8 +89,7 @@ class InvoiceRepository
 
   Future<InvoiceData?> getByRefId(String refId) async {
     final result = await connection.execute(
-      Sql.named(
-          "SELECT * FROM invoices WHERE refId=@refId AND isDeleted=false"),
+      Sql.named("SELECT * FROM invoices WHERE request_referenceid=@refId"),
       parameters: {'refId': refId},
     );
     if (result.isEmpty) {
@@ -85,31 +97,30 @@ class InvoiceRepository
     }
     return InvoiceData(
       id: int.parse(result[0][0].toString()),
-      refId: result[0][1].toString(),
-      nationalCode: result[0][2].toString(),
-      serviceId: result[0][3].toString(),
-      serviceName: result[0][4].toString(),
-      mobileNumber: result[0][5].toString(),
-      plateNumber: result[0][6].toString(),
-      licenseNumber: result[0][7].toString(),
-      userId: result[0][8].toString(),
-      localInvoiceId: result[0][12].toString(),
-      localDate: result[0][13].toString(),
-      rrn: result[0][14].toString(),
-      payGateTranID: result[0][15].toString(),
-      amount: result[0][16].toString(),
-      cardNumber: result[0][17].toString(),
-      payGateTranDate: result[0][18].toString(),
-      serviceStatusCode: result[0][19].toString(),
-      najiResult: result[0][20].toString(),
+      serviceId: result[0][1].toString(),
+      localDate: result[0][2].toString(),
+      name: result[0][3].toString(),
+      mobileNumber: result[0][4].toString(),
+      userId: result[0][5].toString(),
+      nationalCode: result[0][6].toString(),
+      cardNumber: result[0][8].toString(),
+      amount: result[0][10].toString(),
+      refId: result[0][11].toString(),
+      localInvoiceId: result[0][15].toString(),
+      payGateTranID: result[0][17].toString(),
+      rrn: result[0][18].toString(),
+      payGateTranDate: result[0][25].toString(),
+      licenseNumber: result[0][48].toString(),
+      plateNumber: result[0][49].toString(),
+      serviceName: result[0][50].toString(),
+      najiResult: result[0][57].toString(),
     );
   }
 
   @override
   Future<InvoiceData?> getById(String localInvoiceId) async {
     final result = await connection.execute(
-      Sql.named(
-          "SELECT * FROM invoices WHERE localInvoiceId=@localInvoiceId AND isDeleted=false"),
+      Sql.named("SELECT * FROM invoices WHERE order_desc=@localInvoiceId"),
       parameters: {'localInvoiceId': localInvoiceId},
     );
     if (result.isEmpty) {
@@ -117,23 +128,23 @@ class InvoiceRepository
     }
     return InvoiceData(
       id: int.parse(result[0][0].toString()),
-      refId: result[0][1].toString(),
-      nationalCode: result[0][2].toString(),
-      serviceId: result[0][3].toString(),
-      serviceName: result[0][4].toString(),
-      mobileNumber: result[0][5].toString(),
-      plateNumber: result[0][6].toString(),
-      licenseNumber: result[0][7].toString(),
-      userId: result[0][8].toString(),
-      localInvoiceId: result[0][12].toString(),
-      localDate: result[0][13].toString(),
-      rrn: result[0][14].toString(),
-      payGateTranID: result[0][15].toString(),
-      amount: result[0][16].toString(),
-      cardNumber: result[0][17].toString(),
-      payGateTranDate: result[0][18].toString(),
-      serviceStatusCode: result[0][19].toString(),
-      najiResult: result[0][20].toString(),
+      serviceId: result[0][1].toString(),
+      localDate: result[0][2].toString(),
+      name: result[0][3].toString(),
+      mobileNumber: result[0][4].toString(),
+      userId: result[0][5].toString(),
+      nationalCode: result[0][6].toString(),
+      cardNumber: result[0][8].toString(),
+      amount: result[0][10].toString(),
+      refId: result[0][11].toString(),
+      localInvoiceId: result[0][15].toString(),
+      payGateTranID: result[0][17].toString(),
+      rrn: result[0][18].toString(),
+      payGateTranDate: result[0][25].toString(),
+      licenseNumber: result[0][48].toString(),
+      plateNumber: result[0][49].toString(),
+      serviceName: result[0][50].toString(),
+      najiResult: result[0][57].toString(),
     );
   }
 
@@ -143,26 +154,65 @@ class InvoiceRepository
     throw UnimplementedError();
   }
 
+  updateVerifyData(String refId, InvoiceData invoice) async {
+    final result = await connection.execute(
+      Sql.named(
+          "UPDATE invoices SET verify_datetime=@verify_datetime, verify_req_json=@verify_req_json, verify_res_json=@verify_res_json, verify_status=@verify_status, verify_result=@verify_result, verify_msg=@verify_msg WHERE request_referenceid=@refId"),
+      parameters: {
+        'verify_datetime':
+            dateTimeToTimestamp(invoice.verify_datetime ??DateTime(2000)),
+        'verify_req_json': invoice.verify_req_json,
+        'verify_res_json': invoice.verify_res_json,
+        'verify_status': invoice.verify_status,
+        'verify_result': invoice.verify_result,
+        'verify_msg': invoice.verify_msg,
+        'refId': refId,
+      },
+    );
+  }
+
+  updateSettleData(String refId, InvoiceData invoice) async {
+    final result = await connection.execute(
+      Sql.named(
+          "UPDATE invoices SET settle_datetime=@settle_datetime, settle_req_json=@settle_req_json, settle_res_json=@settle_res_json, settle_status=@settle_status, settle_result=@settle_result, settle_msg=@settle_msg WHERE request_referenceid=@refId"),
+      parameters: {
+        'settle_datetime':
+            dateTimeToTimestamp(invoice.settle_datetime ??DateTime(2000)),
+        'settle_req_json': invoice.settle_req_json,
+        'settle_res_json': invoice.settle_res_json,
+        'settle_status': invoice.settle_status,
+        'settle_result': invoice.settle_result,
+        'settle_msg': invoice.settle_msg,
+        'refId': refId,
+      },
+    );
+  }
+
   @override
-  Future<void> update(String refId, InvoiceData model) async {
-    if (model.najiResult != null) {
+  Future<void> update(String refId, InvoiceData invoice) async {
+    if (invoice.najiResult != null) {
       final result = await connection.execute(
         Sql.named(
-            "UPDATE invoices SET najiResult=@najiResult WHERE refId=@refId"),
-        parameters: {'najiResult': model.najiResult, 'refId': refId},
+            "UPDATE invoices SET extra_data=@najiResult WHERE request_referenceid=@refId"),
+        parameters: {'najiResult': invoice.najiResult, 'refId': refId},
       );
     } else {
       final result = await connection.execute(
         Sql.named(
-            "UPDATE invoices SET rrn=@rrn, payGateTranID=@payGateTranID, amount=@amount, ipgRefId=@ipgRefId, cardNumber=@cardNumber, payGateTranDate=@payGateTranDate, serviceStatusCode=@serviceStatusCode WHERE refId=@refId"),
+            "UPDATE invoices SET tracking_code=@rrn, gateway_code=@payGateTranID, card_holder_pan=@cardNumber, resultpay_datetime=@resultpay_datetime, payment_datetime=@payGateTranDate, resultpay_res_json=@resultpay_res_json,resultpay_msg=@resultpay_msg, resultpay_result=@resultpay_result, resultpay_status=@resultpay_status, payment_result=@payment_result WHERE request_referenceid=@refId"),
         parameters: {
-          'rrn': model.rrn,
-          'payGateTranID': model.payGateTranID,
-          'amount': model.amount,
-          'ipgRefId': model.ipgRefId,
-          'cardNumber': model.cardNumber,
-          'payGateTranDate': model.payGateTranDate,
-          'serviceStatusCode': model.serviceStatusCode,
+          'rrn': invoice.rrn,
+          'payGateTranID': invoice.payGateTranID,
+          'cardNumber': invoice.cardNumber,
+          'payGateTranDate': ipgTimeToTimestamp(
+              invoice.payGateTranDate ?? '0000-00-00T00:00:00.0000000'),
+          'resultpay_datetime':
+              dateTimeToTimestamp(invoice.resultpay_datetime ?? DateTime(2000)),
+          'resultpay_res_json': invoice.resultpay_res_json,
+          'resultpay_msg': invoice.resultpay_msg,
+          'resultpay_result': invoice.resultpay_result,
+          'resultpay_status': invoice.resultpay_status,
+          'payment_result':invoice.payment_result,
           'refId': refId
         },
       );

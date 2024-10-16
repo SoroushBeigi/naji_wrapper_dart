@@ -29,15 +29,6 @@ Future<Response> validateUser(Request request) async {
         'mobileNo': mobileNumber,
       });
       if (response.data['resultStatus'] == 0) {
-        await UserRepository.instance?.saveUserInDb(
-          UserModel(
-            guid: guid,
-            firstName: firstName,
-            lastName: lastName,
-            mobileNumber: mobileNumber,
-            nationalCode: nationalCode,
-          ),
-        );
         final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
           'message': response.data['resultStatusMessage'],
           "isRegistered": true,
@@ -108,9 +99,9 @@ Future<Response> verifyOtp(Request request) async {
   final String? nationalCode = body['nationalCode'];
   final String? mobileNumber = body['mobileNumber'];
   final String? otp = body['otp'];
-  final String? guid = body['guid'];
-  final String? firstName = body['firstName'];
-  final String? lastName = body['lastName'];
+  // final String? guid = body['guid'];
+  // final String? firstName = body['firstName'];
+  // final String? lastName = body['lastName'];
 
   if (mobileNumberError(mobileNumber) == null &&
       nationalCodeError(nationalCode) == null &&
@@ -122,15 +113,15 @@ Future<Response> verifyOtp(Request request) async {
       'otp': otp,
     });
     if (response.data['resultStatus'] == 0) {
-      await UserRepository.instance?.saveUserInDb(
-        UserModel(
-          guid: guid,
-          firstName: firstName,
-          lastName: lastName,
-          mobileNumber: mobileNumber,
-          nationalCode: nationalCode,
-        ),
-      );
+      // await UserRepository.instance?.saveUserInDb(
+      //   UserModel(
+      //     guid: guid,
+      //     firstName: firstName,
+      //     lastName: lastName,
+      //     mobileNumber: mobileNumber,
+      //     nationalCode: nationalCode,
+      //   ),
+      // );
       final najiResponse = NajiResponse(
           resultCode: 0,
           failures: [],

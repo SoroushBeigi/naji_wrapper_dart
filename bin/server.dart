@@ -52,7 +52,7 @@ void main() async {
 
   ServiceRepository(connection).init();
   InvoiceRepository(connection).init();
-  UserRepository(connection).init();
+  // UserRepository(connection).init();
 
   final handler =
       Pipeline().addMiddleware(logRequests()).addHandler(router.router.call);

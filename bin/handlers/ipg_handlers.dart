@@ -42,10 +42,14 @@ Future<Response> payment(Request request) async {
   final bodyString = await request.readAsString();
   final Map<String, dynamic> body = jsonDecode(bodyString);
 
+  final String? firstName = body['firstName'];
+  final String? lastName = body['lastName'];
   final String? plateNumber = body['plateNumber'];
   final String? licenseNumber = body['licenseNumber'];
   final String? userId = body['userId'];
   final String? serviceId = body['serviceId'];
+  final String? nationalCode = body['nationalCode'];
+  final String? mobileNumber = body['mobileNumber'];
 
   if (serviceId == null) {
     final najiResponse = NajiResponse(
@@ -56,6 +60,20 @@ Future<Response> payment(Request request) async {
   if (userId == null) {
     final najiResponse = NajiResponse(
         resultCode: 1, failures: ['شناسه کاربر یافت نشد.'], data: {});
+    return Response.ok(najiResponse.getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+
+  if (nationalCode == null) {
+    final najiResponse =
+        NajiResponse(resultCode: 1, failures: ['کدملی یافت نشد.'], data: {});
+    return Response.ok(najiResponse.getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+
+  if (mobileNumber == null) {
+    final najiResponse = NajiResponse(
+        resultCode: 1, failures: ['شماره موبایل یافت نشد.'], data: {});
     return Response.ok(najiResponse.getJson(),
         headers: {"Content-Type": "application/json"});
   }
@@ -71,20 +89,25 @@ Future<Response> payment(Request request) async {
   final localDate = await IpgNetworkModule.instance.dio.get('/v1/Time');
   final String refId;
   final localInvoiceId = DateTime.now().microsecondsSinceEpoch;
-
+  final tokenTime = DateTime.now();
+  final Map<String, dynamic> requestJson;
+  final int status;
+  final String message;
+  final callBackUrl =
+      "${Constants.publicUrl}:${Constants.port}/callback?localInvoiceId=$localInvoiceId";
   try {
-    final response =
-        await IpgNetworkModule.instance.dio.post('/v1/Token', data: {
+    requestJson = {
       'merchantConfigurationId': Constants.merchantConfigurationId,
       'serviceTypeId': 1,
       'localInvoiceId': localInvoiceId,
       'amountInRials': amount,
       'localDate': localDate.data.toString(),
       'additionalData': '',
-      "callbackURL":
-          "http://46.209.222.131:${Constants.port}/callback?localInvoiceId=$localInvoiceId",
+      "callbackURL": callBackUrl,
       "paymentId": "0"
-    });
+    };
+    final response = await IpgNetworkModule.instance.dio
+        .post('/v1/Token', data: requestJson);
     if (response.statusCode.toString()[0] != '2') {
       return Response.ok(
           NajiResponse(resultCode: 1, failures: [
@@ -92,6 +115,8 @@ Future<Response> payment(Request request) async {
           ], data: {}).getJson(),
           headers: {"Content-Type": "application/json"});
     }
+    status = response.statusCode ?? -1;
+    message = response.statusMessage ?? '';
     refId = response.data;
   } catch (e) {
     return Response.ok(
@@ -109,6 +134,16 @@ Future<Response> payment(Request request) async {
     serviceId: serviceId,
     localInvoiceId: localInvoiceId.toString(),
     localDate: localDate.data,
+    mobileNumber: mobileNumber,
+    nationalCode: nationalCode,
+    name: '$firstName $lastName',
+    requestpay_datetime: tokenTime,
+    requestpay_req_json: jsonEncode(requestJson),
+    requestpay_res_json: jsonEncode(refId),
+    requestpay_status: status,
+    requestpay_msg: message,
+    requestpay_result: status == 200 ? 1 : 0,
+    callbackUrl: callBackUrl,
   ));
   final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
     'refId': refId,
@@ -157,6 +192,7 @@ Future<Response> callback(Request request) async {
   final localInvoiceId = request.url.queryParameters['localInvoiceId'];
   try {
     print('Entered Try ');
+    final resultpay_datetime = DateTime.now();
     final tranResult = await IpgNetworkModule.instance.dio
         .get('/v1/TranResult', queryParameters: {
       'merchantConfigurationId': Constants.merchantConfigurationId,
@@ -166,19 +202,24 @@ Future<Response> callback(Request request) async {
     InvoiceRepository.instance?.update(
       tranResult.data['refID'],
       InvoiceData(
-        ipgRefId: tranResult.data['refID'],
         rrn: tranResult.data['rrn'],
         payGateTranID: tranResult.data['payGateTranID'],
         amount: tranResult.data['amount'],
         cardNumber: tranResult.data['cardNumber'],
         payGateTranDate: tranResult.data['payGateTranDate'],
-        serviceStatusCode: tranResult.data['serviceStatusCode'],
+        resultpay_datetime: resultpay_datetime,
+        resultpay_res_json: jsonEncode(tranResult.data),
+        resultpay_msg: tranResult.statusMessage,
+        resultpay_result: tranResult.statusCode == 200 ? 1 : 0,
+        payment_result:tranResult.statusCode == 200 ? 1 : 0,
+        resultpay_status: tranResult.statusCode,
+
       ),
     );
     print('Updated DB ');
 
     if (tranResult.statusCode == 472) {
-      print('tranresult 422 ');
+      print('tranresult 472 ');
       return Response.ok(failureHtml, headers: {
         HttpHeaders.contentTypeHeader: 'text/html',
       });
@@ -210,23 +251,67 @@ Future<Response> callback(Request request) async {
           'merchantConfigurationId': Constants.merchantConfigurationId,
           'payGateTranId': int.parse(tranResult.data['payGateTranID']),
         });
-
-        return Response.ok(failureHtml, headers: {
+        final najiFailureHtml = '''
+      <!DOCTYPE html>
+    <html>
+      <head>
+        <title>نتیجه تراکنش</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+          .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+          .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+        </style>
+      </head>
+      <body>
+          <h1>عملیات ناموفق سرویس دهنده</h1>
+          <p>سرویس موردنظر انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.</p>
+           <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}" class="button">بازگشت به برنامه</a>
+      </body>
+    </html>
+    ''';
+        return Response.ok(najiFailureHtml, headers: {
           HttpHeaders.contentTypeHeader: 'text/html',
         });
       } else {
         print('Naji 0 status ');
-        final verifyResult =
-            await IpgNetworkModule.instance.dio.post('/v1/Verify', data: {
+        final verifyTime = DateTime.now();
+        final verifyRequestJson = {
           'merchantConfigurationId': Constants.merchantConfigurationId,
           'payGateTranId': int.parse(tranResult.data['payGateTranID']),
-        });
+        };
+        final verifyResult = await IpgNetworkModule.instance.dio
+            .post('/v1/Verify', data: verifyRequestJson);
+
+        InvoiceRepository.instance?.updateVerifyData(
+            invoice.refId ?? '-1',
+            InvoiceData(
+              verify_datetime: verifyTime,
+              verify_req_json: jsonEncode(verifyRequestJson),
+              verify_res_json: verifyResult.data,
+              verify_status: verifyResult.statusCode,
+              verify_result: verifyResult.statusCode == 200 ? 1 : 0,
+              verify_msg: verifyResult.statusMessage,
+            ));
+
+        final settleTime = DateTime.now();
+        final settleRequestJson = {
+          'merchantConfigurationId': Constants.merchantConfigurationId,
+          'payGateTranId': int.parse(tranResult.data['payGateTranID']),
+        };
+
         print('verify code: ${verifyResult.statusCode} ');
-        final settlementResult =
-            await IpgNetworkModule.instance.dio.post('/v1/Settlement', data: {
-          'merchantConfigurationId': Constants.merchantConfigurationId,
-          'payGateTranId': int.parse(tranResult.data['payGateTranID']),
-        });
+        final settlementResult = await IpgNetworkModule.instance.dio
+            .post('/v1/Settlement', data: settleRequestJson);
+        InvoiceRepository.instance?.updateSettleData(
+            invoice.refId ?? '-1',
+            InvoiceData(
+              settle_datetime: settleTime,
+              settle_req_json: jsonEncode(settleRequestJson),
+              settle_res_json: settlementResult.data,
+              settle_status: settlementResult.statusCode,
+              settle_result: settlementResult.statusCode == 200 ? 1 : 0,
+              settle_msg: settlementResult.statusMessage,
+            ));
         print('settlement code: ${verifyResult.statusCode} ');
 
         final successHtml = '''
@@ -262,8 +347,6 @@ Future<Response> callback(Request request) async {
       });
     }
   } catch (e) {
-    print('CATCH ');
-    //TODO: HTML failure for Asan Pardakht
     print(e);
     return Response.ok(failureHtml, headers: {
       HttpHeaders.contentTypeHeader: 'text/html',
@@ -340,6 +423,24 @@ Future<Response> serviceResult(Request request) async {
         NajiResponse(
             resultCode: 1,
             failures: ['فاکتور موردنظر یافت نشد'],
+            data: {}).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+
+  if (invoice.najiResult == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            failures: ['فاکتور موردنظر یافت نشد'],
+            data: {}).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  final decodedNajiResult = jsonDecode(invoice.najiResult ?? '');
+  if (decodedNajiResult['resultStatus'].toString() != '0') {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            failures: [decodedNajiResult['resultStatusMessage']],
             data: {}).getJson(),
         headers: {"Content-Type": "application/json"});
   }
@@ -436,11 +537,11 @@ Future<Response> serviceHistory(Request request) async {
                 'serviceName': invoice.serviceName,
                 'rrn': invoice.rrn,
                 'date': gregorianToJalali(
-                  int.parse(invoice.localDate?.substring(0, 4)??'0'),
-                  int.parse(invoice.localDate?.substring(4, 6)??'0'),
-                  int.parse(invoice.localDate?.substring(6, 8)??'0'),
+                  int.parse(invoice.localDate?.substring(0, 4) ?? '0'),
+                  int.parse(invoice.localDate?.substring(4, 6) ?? '0'),
+                  int.parse(invoice.localDate?.substring(6, 8) ?? '0'),
                 ).join('/'),
-                'time':'',
+                'time': '',
                 'hasNajiResult': (invoice.najiResult?.isNotEmpty ?? false)
               },
             )
