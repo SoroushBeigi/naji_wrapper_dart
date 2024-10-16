@@ -53,6 +53,27 @@ class InvoiceRepository
     throw UnimplementedError();
   }
 
+  Future<List<InvoiceData>?> getAllForUser(String guid) async {
+    final result = await connection.execute(
+        Sql.named(
+            "SELECT refId, serviceName, rrn, localDate, najiResult FROM invoices WHERE isDeleted=false AND userId = @guid"),
+        parameters: {'guid': guid});
+    if (result.isEmpty) {
+      return null;
+    }
+    return result
+        .map(
+          (element) => InvoiceData(
+            refId: element[0].toString(),
+            serviceName: element[1].toString(),
+            rrn: element[2].toString(),
+            localDate: element[3].toString(),
+            najiResult: element[4].toString(),
+          ),
+        )
+        .toList();
+  }
+
   Future<InvoiceData?> getByRefId(String refId) async {
     final result = await connection.execute(
       Sql.named(
@@ -124,16 +145,13 @@ class InvoiceRepository
 
   @override
   Future<void> update(String refId, InvoiceData model) async {
-    if(model.najiResult!=null){
+    if (model.najiResult != null) {
       final result = await connection.execute(
         Sql.named(
             "UPDATE invoices SET najiResult=@najiResult WHERE refId=@refId"),
-        parameters: {
-          'najiResult': model.najiResult,
-          'refId': refId
-        },
+        parameters: {'najiResult': model.najiResult, 'refId': refId},
       );
-    }else{
+    } else {
       final result = await connection.execute(
         Sql.named(
             "UPDATE invoices SET rrn=@rrn, payGateTranID=@payGateTranID, amount=@amount, ipgRefId=@ipgRefId, cardNumber=@cardNumber, payGateTranDate=@payGateTranDate, serviceStatusCode=@serviceStatusCode WHERE refId=@refId"),
@@ -149,6 +167,5 @@ class InvoiceRepository
         },
       );
     }
-
   }
 }
