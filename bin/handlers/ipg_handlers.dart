@@ -11,6 +11,7 @@ import '../models/invoice_model.dart';
 import '../constants.dart';
 import 'naji_handlers.dart';
 import '../utils/date_converter.dart';
+import '../utils/result_mapper.dart';
 
 const failureHtml = '''
       <!DOCTYPE html>
@@ -446,51 +447,61 @@ Future<Response> serviceResult(Request request) async {
             data: {}).getJson(),
         headers: {"Content-Type": "application/json"});
   }
-  final decodedNajiResult = jsonDecode(invoice.najiResult ?? '');
-  if (decodedNajiResult['resultStatus'].toString() != '0') {
-    return Response.ok(
-        NajiResponse(
-            resultCode: 1,
-            failures: [decodedNajiResult['resultStatusMessage']],
-            data: {}).getJson(),
-        headers: {"Content-Type": "application/json"});
+  if (!Constants.isTesting) {
+    final decodedNajiResult = jsonDecode(invoice.najiResult ?? '');
+    if (decodedNajiResult['resultStatus'].toString() != '0') {
+      return Response.ok(
+          NajiResponse(
+              resultCode: 1,
+              failures: [decodedNajiResult['resultStatusMessage']],
+              data: {}).getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
   }
+
   final json = jsonDecode(invoice.najiResult!);
   if (json == null || json == {}) {
-    ///TESTING
-    // final najiStatus = await doNajiRequest(invoice);
-    // final readInvoice =
-    //     await InvoiceRepository.instance?.getByRefId(invoice.refId ?? '');
-    // final newJson = jsonDecode(readInvoice!.najiResult!);
-    // if (newJson['resultStatus'] != 0) {
-    //   return Response.ok(
-    //       NajiResponse(resultCode: 1, failures: [
-    //         newJson['resultStatusMessage'] ??
-    //             'پاسخ مناسب از سرویس ناجی دریافت نشد.'
-    //       ], data: {}).getJson(),
-    //       headers: {"Content-Type": "application/json"});
-    // }
-    // return Response.ok(
-    //     NajiResponse(resultCode: 0, failures: [], data: {
-    //       'negativePoint': invoice.serviceId == '1' ? newJson : {},
-    //       'licensePlates':
-    //           invoice.serviceId == '2' ? jsonDecode(newJson['result']) : {},
-    //       'drivingLicences':
-    //           invoice.serviceId == '3' ? jsonDecode(newJson['result']) : {},
-    //       'vehiclesViolations':
-    //           invoice.serviceId == '4' ? jsonDecode(newJson['result']) : {},
-    //       'violationsAggregate': invoice.serviceId == '5' ? newJson : {},
-    //       'vehiclesDocumentsStatus': invoice.serviceId == '6' ? newJson : {},
-    //     }).getJson(),
-    //     headers: {"Content-Type": "application/json"});
-    //
-    // ///TESTING
-    // ///TODO: UNCOMMENT AND COMMENT TESTING ABOVE
-    return Response.ok(
-        NajiResponse(resultCode: 1, failures: [
-          'تراکنش انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.'
-        ], data: {}).getJson(),
-        headers: {"Content-Type": "application/json"});
+    if (Constants.isTesting) {
+      final najiStatus = await doNajiRequest(invoice);
+      final readInvoice =
+          await InvoiceRepository.instance?.getByRefId(invoice.refId ?? '');
+      final newJson = jsonDecode(readInvoice!.najiResult!);
+      print('newJson');
+      print(newJson);
+      if (newJson['resultStatus'] != 0) {
+        return Response.ok(
+            NajiResponse(resultCode: 1, failures: [
+              newJson['resultStatusMessage'] ??
+                  'پاسخ مناسب از سرویس ناجی دریافت نشد.'
+            ], data: {}).getJson(),
+            headers: {"Content-Type": "application/json"});
+      }
+      return Response.ok(
+          NajiResponse(resultCode: 0, failures: [], data: {
+            'negativePoint': invoice.serviceId == '1' ? newJson : {},
+            'licensePlates':
+                invoice.serviceId == '2' ? jsonDecode(newJson['result']) : {},
+            'drivingLicences': invoice.serviceId == '3'
+                ? DrivingLicenseMapper()
+                .mapList((jsonDecode(newJson['result']) as List<dynamic>)
+                .map(
+                  (e) => NajiDrivingLicensesModel.fromJson(e),
+            )
+                .toList())
+                : {},
+            'vehiclesViolations':
+                invoice.serviceId == '4' ? jsonDecode(newJson['result']) : {},
+            'violationsAggregate': invoice.serviceId == '5' ? newJson : {},
+            'vehiclesDocumentsStatus': invoice.serviceId == '6' ? newJson : {},
+          }).getJson(),
+          headers: {"Content-Type": "application/json"});
+    } else {
+      return Response.ok(
+          NajiResponse(resultCode: 1, failures: [
+            'تراکنش انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.'
+          ], data: {}).getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
   } else {
     if (json['resultStatus'] != 0) {
       return Response.ok(
@@ -505,8 +516,14 @@ Future<Response> serviceResult(Request request) async {
           'negativePoint': invoice.serviceId == '1' ? json : {},
           'licensePlates':
               invoice.serviceId == '2' ? jsonDecode(json['result']) : {},
-          'drivingLicences':
-              invoice.serviceId == '3' ? jsonDecode(json['result']) : {},
+          'drivingLicences': invoice.serviceId == '3'
+              ? DrivingLicenseMapper()
+                  .mapList((jsonDecode(json['result']) as List<dynamic>)
+                      .map(
+                        (e) => NajiDrivingLicensesModel.fromJson(e),
+                      )
+                      .toList())
+              : {},
           'vehiclesViolations':
               invoice.serviceId == '4' ? jsonDecode(json['result']) : {},
           'violationsAggregate': invoice.serviceId == '5' ? json : {},

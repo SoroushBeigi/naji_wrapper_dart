@@ -6,8 +6,8 @@ import 'package:shelf/shelf_io.dart';
 import 'router.dart';
 import 'db/service_repository.dart';
 import 'db/invoice_repository.dart';
-import 'db/user_repository.dart';
 import 'constants.dart';
+import 'package:shelf_static/shelf_static.dart';
 
 // const PORT='8080';
 // const DB_PORT='5432';
@@ -52,10 +52,12 @@ void main() async {
 
   ServiceRepository(connection).init();
   InvoiceRepository(connection).init();
-  // UserRepository(connection).init();
 
-  final handler =
-      Pipeline().addMiddleware(logRequests()).addHandler(router.router.call);
+  final staticHandler = createStaticHandler('../assets', defaultDocument: null);
+
+  final handler = Pipeline()
+      .addMiddleware(logRequests())
+      .addHandler(Cascade().add(staticHandler).add(router.router.call).handler);
 
   final port = int.parse(Constants.port);
   final server = await serve(handler, ip, port);
