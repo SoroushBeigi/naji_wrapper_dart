@@ -12,6 +12,7 @@ import '../constants.dart';
 import 'naji_handlers.dart';
 import '../utils/date_converter.dart';
 import '../utils/result_mapper.dart';
+import '../models/payment_result.dart';
 
 const failureHtml = '''
       <!DOCTYPE html>
@@ -30,6 +31,46 @@ const failureHtml = '''
       </body>
     </html>
     ''';
+
+String generatePaymentHtml(PaymentResult paymentResult) {
+  return '''
+  <html>
+  <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link rel="stylesheet" href="~/css/site.css" type="text/css" />
+  </head>
+  <body>
+      <div class="payment-details">
+          <div id="resultFrame">
+              <div id="header-payment" class="${paymentResult.status.toLowerCase()}">
+                  <span>${paymentResult.statusTitle}</span>
+              </div>
+              <div class="body-payment">
+                  <div class="field-wrapper">
+                      <label>مبلغ تراکنش</label>
+                      <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'}">
+                          <span>${paymentResult.payment?.amount.toString()}</span> <span>ریال</span>
+                      </div>
+                  </div>
+                  <div class="field-wrapper">
+                      <label>تاریخ و زمان تراکنش</label>
+                      <span>${paymentResult.payment?.resultPaymentDateTime.toString()}</span>
+                  </div>
+                  ${paymentResult.payment?.message != null ? '''
+                  <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'}">
+                      <span>${paymentResult.payment?.message}</span>
+                  </div>
+                  ''' : ''}
+              </div>
+              <div id="footer-payment">
+                  <a class="redirect-button" href="${paymentResult.payment?.tag1 ?? 'default-link'}">بازگشت به برنامه امداد خودرو</a>
+              </div>
+          </div>
+      </div>
+  </body>
+  </html>
+  ''';
+}
 
 Future<Response> time(Request request) async {
   final response = await IpgNetworkModule.instance.dio.get('/v1/Time');
@@ -326,26 +367,36 @@ Future<Response> callback(Request request) async {
             ));
         print('settlement code: ${verifyResult.statusCode} ');
 
-        final successHtml = '''
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>نتیجه تراکنش</title>
-        <style>
-          body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
-          .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
-          .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>عملیات موفق</h1>
-          <p>تراکنش با موفقیت انجام شد</p>
-          <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}" class="button">بازگشت به برنامه</a>
-        </div>
-      </body>
-    </html>
-    ''';
+        final successHtml = generatePaymentHtml(PaymentResult(
+            status: 'successful',
+            statusTitle: 'تراکنش موفق',
+            payment: Payment(
+              amount: int.parse(invoice.amount ?? '0'),
+              resultPaymentDateTime: invoice.resultpay_datetime.toString() ?? '',
+              message: 'پرداخت موفق',
+              tag1: 'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
+            )));
+
+    //     final successHtml = '''
+    // <!DOCTYPE html>
+    // <html>
+    //   <head>
+    //     <title>نتیجه تراکنش</title>
+    //     <style>
+    //       body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+    //       .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    //       .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+    //     </style>
+    //   </head>
+    //   <body>
+    //     <div class="container">
+    //       <h1>عملیات موفق</h1>
+    //       <p>تراکنش با موفقیت انجام شد</p>
+    //       <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}" class="button">بازگشت به برنامه</a>
+    //     </div>
+    //   </body>
+    // </html>
+    // ''';
         return Response.ok(successHtml, headers: {
           HttpHeaders.contentTypeHeader: 'text/html',
         });
@@ -483,11 +534,11 @@ Future<Response> serviceResult(Request request) async {
                 invoice.serviceId == '2' ? jsonDecode(newJson['result']) : {},
             'drivingLicences': invoice.serviceId == '3'
                 ? DrivingLicenseMapper()
-                .mapList((jsonDecode(newJson['result']) as List<dynamic>)
-                .map(
-                  (e) => NajiDrivingLicensesModel.fromJson(e),
-            )
-                .toList())
+                    .mapList((jsonDecode(newJson['result']) as List<dynamic>)
+                        .map(
+                          (e) => NajiDrivingLicensesModel.fromJson(e),
+                        )
+                        .toList())
                 : {},
             'vehiclesViolations':
                 invoice.serviceId == '4' ? jsonDecode(newJson['result']) : {},

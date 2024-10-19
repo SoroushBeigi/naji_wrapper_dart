@@ -1,60 +1,58 @@
 import '../constants.dart';
 
 abstract class ResultMapper<T> {
-  List<RowOfData> map(T model)=>[];
-  List<List<RowOfData>> mapList(List<T> models)=>[];
+  List<RowOfData> map(T model) => [];
+  List<List<RowOfData>> mapList(List<T> models) => [];
 }
 
-final  url = '${Constants.baseUrl}:${Constants.port}';
-
+final url = 'http://${Constants.baseUrl}:${Constants.port}';
 
 class DrivingLicenseMapper extends ResultMapper<NajiDrivingLicensesModel> {
   @override
-  List<List<RowOfData>> mapList(models) =>
-      models.map((model) =>
-      [
-        RowOfData(
-          title: 'نام',
-          svg: '$url/svg/person.svg',
-          description: model.firstName,
-        ),
-        RowOfData(
-          title: 'نام خانوادگی',
-          svg: '$url/svg/person.svg',
-          description: model.lastName,
-        ),
-        RowOfData(
-          title: 'نوع گواهینامه',
-          svg: '$url/svg/description.svg',
-          description: model.title,
-        ),
-        RowOfData(
-          title: 'شماره گواهینامه',
-          svg: '$url/svg/confirmation_number.svg',
-          description: model.printNumber,
-        ),
-        RowOfData(
-          title: 'بارکد گواهینامه',
-          svg: '$url/svg/barcode.svg',
-          description: model.barcode,
-        ),
-        RowOfData(
-          title: 'وضعیت گواهینامه',
-          svg: '$url/svg/done.svg',
-          description: model.rahvarStatus,
-        ),
-        RowOfData(
-          title: 'تاریخ صدور گواهینامه',
-          svg: '$url/svg/calendar_month.svg',
-          description: model.printDate,
-        ),
-        RowOfData(
-          title: 'مدت اعتبار گواهینامه',
-          svg: '$url/svg/calendar_month.svg',
-          description: model.validYears,
-        ),
-      ]
-      ).toList();
+  List<List<RowOfData>> mapList(models) => models
+      .map((model) => [
+            RowOfData(
+              title: 'نام',
+              svg: '$url/svg/person.svg',
+              description: model.firstName,
+            ),
+            RowOfData(
+              title: 'نام خانوادگی',
+              svg: '$url/svg/person.svg',
+              description: model.lastName,
+            ),
+            RowOfData(
+              title: 'نوع گواهینامه',
+              svg: '$url/svg/description.svg',
+              description: model.title,
+            ),
+            RowOfData(
+              title: 'شماره گواهینامه',
+              svg: '$url/svg/confirmation_number.svg',
+              description: model.printNumber,
+            ),
+            RowOfData(
+              title: 'بارکد گواهینامه',
+              svg: '$url/svg/barcode.svg',
+              description: model.barcode,
+            ),
+            RowOfData(
+              title: 'وضعیت گواهینامه',
+              svg: '$url/svg/done.svg',
+              description: model.rahvarStatus,
+            ),
+            RowOfData(
+              title: 'تاریخ صدور گواهینامه',
+              svg: '$url/svg/calendar_month.svg',
+              description: model.printDate,
+            ),
+            RowOfData(
+              title: 'مدت اعتبار گواهینامه',
+              svg: '$url/svg/calendar_month.svg',
+              description: model.validYears,
+            ),
+          ])
+      .toList();
 }
 
 class LicensePlateMapper extends ResultMapper<NajiLicensesPlateModel> {
