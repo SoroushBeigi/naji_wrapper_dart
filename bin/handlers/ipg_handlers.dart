@@ -211,9 +211,8 @@ Future<Response> callback(Request request) async {
         resultpay_res_json: jsonEncode(tranResult.data),
         resultpay_msg: tranResult.statusMessage,
         resultpay_result: tranResult.statusCode == 200 ? 1 : 0,
-        payment_result:tranResult.statusCode == 200 ? 1 : 0,
+        payment_result: tranResult.statusCode == 200 ? 1 : 0,
         resultpay_status: tranResult.statusCode,
-
       ),
     );
     print('Updated DB ');
@@ -246,11 +245,23 @@ Future<Response> callback(Request request) async {
         ///-1 also comes here, which means HTTP result to naji services was NOT 200!
         //TODO: reverse, cancel
         //TODO: html failure
-        final reverseResult =
-            await IpgNetworkModule.instance.dio.post('/v1/Reverse', data: {
+        final reverseDateTime = DateTime.now();
+        final reverseRequestJson = {
           'merchantConfigurationId': Constants.merchantConfigurationId,
           'payGateTranId': int.parse(tranResult.data['payGateTranID']),
-        });
+        };
+        final reverseResult = await IpgNetworkModule.instance.dio
+            .post('/v1/Reverse', data: reverseRequestJson);
+        InvoiceRepository.instance?.updateReverseData(
+            invoice.refId ?? '-1',
+            InvoiceData(
+              reverse_datetime: reverseDateTime,
+              reverse_req_json: jsonEncode(reverseRequestJson),
+              reverse_res_json: reverseResult.data,
+              reverse_status: reverseResult.statusCode,
+              reverse_result: reverseResult.statusCode == 200 ? 1 : 0,
+              reverse_msg: reverseResult.statusMessage,
+            ));
         final najiFailureHtml = '''
       <!DOCTYPE html>
     <html>

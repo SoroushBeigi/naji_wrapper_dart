@@ -30,10 +30,13 @@ class InvoiceData {
       resultpay_msg,
       verify_req_json,
       verify_res_json,
+      verify_msg,
       settle_res_json,
       settle_req_json,
-      verify_msg,
-      settle_msg;
+      settle_msg,
+      reverse_req_json,
+      reverse_res_json,
+      reverse_msg;
 
   final int? requestpay_status,
       requestpay_result,
@@ -43,14 +46,23 @@ class InvoiceData {
       settle_status,
       verify_result,
       settle_result,
+      reverse_result,
+      reverse_status,
       payment_result;
 
   final DateTime? requestpay_datetime,
       resultpay_datetime,
       verify_datetime,
-      settle_datetime;
+      settle_datetime,
+      reverse_datetime;
 
   InvoiceData({
+    this.reverse_req_json,
+    this.reverse_res_json,
+    this.reverse_msg,
+    this.reverse_result,
+    this.reverse_status,
+    this.reverse_datetime,
     this.payment_result,
     this.callbackUrl,
     this.settle_res_json,
@@ -139,6 +151,12 @@ class InvoiceData {
       "settle_datetime": settle_datetime,
       "callbackUrl": callbackUrl,
       "payment_result": payment_result,
+      "reverse_req_json": reverse_req_json,
+      "reverse_res_json": reverse_res_json,
+      "reverse_status": reverse_status,
+      "reverse_result": reverse_result,
+      "reverse_msg": reverse_msg,
+      "reverse_datetime": reverse_datetime,
     };
   }
 }

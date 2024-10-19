@@ -188,6 +188,24 @@ class InvoiceRepository
     );
   }
 
+  updateReverseData(String refId, InvoiceData invoice) async {
+    final result = await connection.execute(
+      Sql.named(
+          "UPDATE invoices SET reverse_datetime=@reverse_datetime, reverse_req_json=@reverse_req_json, reverse_res_json=@reverse_res_json, reverse_status=@reverse_status, reverse_result=@reverse_result, reverse_msg=@reverse_msg WHERE request_referenceid=@refId"),
+      parameters: {
+        'reverse_datetime':
+        dateTimeToTimestamp(invoice.reverse_datetime ?? DateTime(2000)),
+        'reverse_req_json': invoice.reverse_req_json,
+        'reverse_res_json': invoice.reverse_res_json,
+        'reverse_status': invoice.reverse_status,
+        'reverse_result': invoice.reverse_result,
+        'reverse_msg': invoice.reverse_msg,
+        'refId': refId,
+      },
+    );
+  }
+
+
   @override
   Future<void> update(String refId, InvoiceData invoice) async {
     if (invoice.najiResult != null) {
