@@ -1,7 +1,9 @@
 import '../constants.dart';
+import 'date_converter.dart';
 
 abstract class ResultMapper<T> {
   List<RowOfData> map(T model) => [];
+
   List<List<RowOfData>> mapList(List<T> models) => [];
 }
 
@@ -55,9 +57,76 @@ class DrivingLicenseMapper extends ResultMapper<NajiDrivingLicensesModel> {
       .toList();
 }
 
-class LicensePlateMapper extends ResultMapper<NajiLicensesPlateModel> {
+class LicensePlatesMapper extends ResultMapper<NajiLicensesPlateModel> {
   @override
-  List<RowOfData> map(model) => [];
+  List<List<RowOfData>> mapList(models) => models.map((model) {
+        final List<dynamic>? jalaliDate;
+        if (model.separationDate == null) {
+          jalaliDate = null;
+        } else {
+          String dateString = model.separationDate!.split(' ')[0];
+          int year = int.parse(dateString.substring(0, 4));
+          int month = int.parse(dateString.substring(5, 7));
+          int day = int.parse(dateString.substring(8, 10));
+          jalaliDate = gregorianToJalali(year, month, day);
+        }
+
+        return [
+          RowOfData(
+            title: 'سریال',
+            svg: '$url/svg/confirmation_number.svg',
+            description: model.serial,
+          ),
+          RowOfData(
+            title: 'توضیحات',
+            svg: '$url/svg/description.svg',
+            description: model.description,
+          ),
+          RowOfData(
+            title: 'شماره پلاک',
+            svg: '$url/svg/directions_car.svg',
+            description: model.licensePlate,
+          ),
+          RowOfData(
+              title: 'تاریخ فک پلاک',
+              svg: '$url/svg/calendar_month.svg',
+              description: jalaliDate == null
+                  ? null
+                  : '${jalaliDate[0]}/${jalaliDate[1]}/${jalaliDate[2]} ${model.separationDate!.split(' ')[1]}')
+        ];
+      }).toList();
+}
+
+class VehicleViolationsMapper extends ResultMapper<ViolationModel> {
+  @override
+  List<List<RowOfData>> mapList(models) => models.map((model) {
+        return [
+          RowOfData(
+              title: 'تاریخ وقوع تخلف',
+              svg: '$url/svg/calendar_month.svg',
+              description: model.violationOccuredDate),
+          RowOfData(
+              title: 'نوع تخلف',
+              svg: '$url/svg/traffic.svg',
+              description: model.violationType?.violationTypeName),
+          RowOfData(
+              title: 'نوع ثبت تخلف',
+              svg: '$url/svg/speed_camera.svg',
+              description: model.violationOccuredDate),
+          RowOfData(
+              title: 'محل وقوع تخلف',
+              svg: '$url/svg/location.svg',
+              description: model.violationAddress),
+          RowOfData(
+              title: 'نوع ثبت تخلف',
+              svg: '$url/svg/speed_camera.svg',
+              description: model.violationOccuredDate),
+          RowOfData(
+              title: 'آیا برای این تخلف تصویر وجود دارید؟',
+              svg: '$url/svg/image.svg',
+              description: (model.hasImage??false)? 'بله' : 'خیر'),
+        ];
+      }).toList();
 }
 
 class RowOfData {

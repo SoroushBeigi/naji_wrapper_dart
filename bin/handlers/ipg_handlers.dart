@@ -517,8 +517,6 @@ Future<Response> serviceResult(Request request) async {
       final readInvoice =
           await InvoiceRepository.instance?.getByRefId(invoice.refId ?? '');
       final newJson = jsonDecode(readInvoice!.najiResult!);
-      print('newJson');
-      print(newJson);
       if (newJson['resultStatus'] != 0) {
         return Response.ok(
             NajiResponse(resultCode: 1, failures: [
@@ -527,11 +525,17 @@ Future<Response> serviceResult(Request request) async {
             ], data: {}).getJson(),
             headers: {"Content-Type": "application/json"});
       }
+
       return Response.ok(
           NajiResponse(resultCode: 0, failures: [], data: {
             'negativePoint': invoice.serviceId == '1' ? newJson : {},
             'licensePlates':
-                invoice.serviceId == '2' ? jsonDecode(newJson['result']) : {},
+            invoice.serviceId == '2' ? LicensePlatesMapper()
+                .mapList((jsonDecode(newJson['result']) as List<dynamic>)
+                .map(
+                  (e) => NajiLicensesPlateModel.fromJson(e),
+            )
+                .toList()) : {},
             'drivingLicences': invoice.serviceId == '3'
                 ? DrivingLicenseMapper()
                     .mapList((jsonDecode(newJson['result']) as List<dynamic>)
@@ -541,7 +545,33 @@ Future<Response> serviceResult(Request request) async {
                         .toList())
                 : {},
             'vehiclesViolations':
-                invoice.serviceId == '4' ? jsonDecode(newJson['result']) : {},
+                invoice.serviceId == '4' ? {
+                  'violations':VehicleViolationsMapper()
+                      .mapList((jsonDecode(newJson['result'])['violations'] as List<dynamic>)
+                      .map(
+                        (e) => ViolationModel.fromJson(e),
+                  )
+                      .toList()),
+
+                  'updateViolationsDate':RowOfData(
+                    title: 'تاریخ استعلام خلافی',
+                    svg: '$url/svg/calendar_month.svg',
+                    description: jsonDecode(newJson['result'])['updateViolationsDate'],
+                  ).toJson(),
+
+                  'plateChar':RowOfData(
+                    title: 'پلاک',
+                    svg: '$url/svg/directions_car.svg',
+                    description: jsonDecode(newJson['result'])['plateChar'],
+                  ).toJson(),
+
+                  'inquirePrice':RowOfData(
+                    title: 'جمع کل خلافی',
+                    svg: '$url/svg/payment.svg',
+                    description: jsonDecode(newJson['result'])['inquirePrice'],
+                  ).toJson(),
+
+                } : {},
             'violationsAggregate': invoice.serviceId == '5' ? newJson : {},
             'vehiclesDocumentsStatus': invoice.serviceId == '6' ? newJson : {},
           }).getJson(),
@@ -566,7 +596,12 @@ Future<Response> serviceResult(Request request) async {
         NajiResponse(resultCode: 0, failures: [], data: {
           'negativePoint': invoice.serviceId == '1' ? json : {},
           'licensePlates':
-              invoice.serviceId == '2' ? jsonDecode(json['result']) : {},
+              invoice.serviceId == '2' ? LicensePlatesMapper()
+                  .mapList((jsonDecode(json['result']) as List<dynamic>)
+                  .map(
+                    (e) => NajiLicensesPlateModel.fromJson(e),
+              )
+                  .toList()) : {},
           'drivingLicences': invoice.serviceId == '3'
               ? DrivingLicenseMapper()
                   .mapList((jsonDecode(json['result']) as List<dynamic>)
@@ -576,7 +611,33 @@ Future<Response> serviceResult(Request request) async {
                       .toList())
               : {},
           'vehiclesViolations':
-              invoice.serviceId == '4' ? jsonDecode(json['result']) : {},
+              invoice.serviceId == '4' ? {
+            'violations':VehicleViolationsMapper()
+                .mapList((jsonDecode(json['result']['violations']) as List<dynamic>)
+                .map(
+                  (e) => ViolationModel.fromJson(e),
+            )
+                .toList()),
+
+                'updateViolationsDate':RowOfData(
+                  title: 'تاریخ استعلام خلافی',
+                  svg: '$url/svg/calendar_month.svg',
+                  description: json['result']['updateViolationsDate'],
+                ).toJson(),
+
+                'plateChar':RowOfData(
+                  title: 'پلاک',
+                  svg: '$url/svg/directions_car.svg',
+                  description: json['result']['plateChar'],
+                ).toJson(),
+
+                'inquirePrice':RowOfData(
+                  title: 'جمع کل خلافی',
+                  svg: '$url/svg/payment.svg',
+                  description: json['result']['inquirePrice'],
+                ).toJson(),
+
+              } : {},
           'violationsAggregate': invoice.serviceId == '5' ? json : {},
           'vehiclesDocumentsStatus': invoice.serviceId == '6' ? json : {},
         }).getJson(),
