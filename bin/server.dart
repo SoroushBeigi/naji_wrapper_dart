@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:postgres/postgres.dart';
@@ -8,35 +9,12 @@ import 'db/service_repository.dart';
 import 'db/invoice_repository.dart';
 import 'constants.dart';
 import 'package:shelf_static/shelf_static.dart';
-
-// const PORT='8080';
-// const DB_PORT='5432';
-// const DB_HOST='host.docker.internal';
-// const DB_USER='postgres';
-// const DB_PASS='123456';
-// const DB_NAME='test_db';
+import 'package:logging/logging.dart';
 
 void main() async {
-  // var environment = Platform.environment['ENVIRONMENT'] ?? 'local';
-  //
-  // environment = environment.trim().toLowerCase();
-  //
-  // if (environment == 'local') {
-  //   load();
-  // }
-  //DOCKER COMPOSE:
-  // final DB_HOST = env['DB_HOST'] ?? 'db';
-  // final DB_PORT = int.parse(env['DB_PORT']??'5432');
-  // final DB_USER = env['DB_USER'] ?? 'wrapper';
-  // final DB_PASS = env['DB_PASS'] ?? 'bpj12345';
-  // final DB_NAME = env['DB_NAME'] ?? 'naji_db';
+  // initLogging();
+  // final log = Logger('NajiWrapper');
 
-  //TEST:
-  // final DB_HOST ='localhost';
-  // final DB_PORT = 5432;
-  // final DB_USER = 'postgres';
-  // final DB_PASS = '123456';
-  // final DB_NAME = 'naji_db';
 
   final router = NajiRouter();
   final ip = InternetAddress.anyIPv4;
@@ -62,4 +40,28 @@ void main() async {
   final port = int.parse(Constants.port);
   final server = await serve(handler, ip, port);
   print('Server listening on ip $ip port ${server.port}');
+  // log.info('Server listening on ip $ip port ${server.port}');
 }
+
+// void initLogging() {
+//   Logger.root.level = Level.ALL;
+//   Logger.root.onRecord.listen((record) async {
+//     final logMessage = jsonEncode({
+//       'loggerName': record.loggerName,
+//       'level': record.level.name,
+//       'time': record.time.toIso8601String(),
+//       'message': record.message,
+//       'error': record.error?.toString(),
+//       'stackTrace': record.stackTrace?.toString(),
+//     });
+//
+//     await sendToLogstash(logMessage);
+//   });
+// }
+//
+// Future<void> sendToLogstash(String logMessage) async {
+//   final socket = await Socket.connect('localhost', Constants.logstashPort);
+//   socket.write(logMessage);
+//   await socket.flush();
+//   socket.destroy();
+// }

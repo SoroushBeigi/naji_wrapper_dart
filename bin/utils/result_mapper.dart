@@ -122,7 +122,7 @@ class VehicleViolationsMapper extends ResultMapper<ViolationModel> {
               svg: '$url/svg/speed_camera.svg',
               description: model.violationOccuredDate),
           RowOfData(
-              title: 'آیا برای این تخلف تصویر وجود دارید؟',
+              title: 'آیا برای این تخلف تصویر وجود دارد',
               svg: '$url/svg/image.svg',
               description: (model.hasImage ?? false) ? 'بله' : 'خیر'),
         ];

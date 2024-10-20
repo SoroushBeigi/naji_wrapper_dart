@@ -31,8 +31,8 @@ class NajiRouter {
     ..get('/paymentGateway', paymentGateway)
     ..get('/callback', callback)
     ..post('/callback', callback)
-    ..post('/serviceResult', serviceResult);
-    // ..post('/serviceHistory',serviceHistory);
+    ..post('/serviceResult', serviceResult)
+    ..post('/serviceHistory',serviceHistory);
 
   get router => _router;
 

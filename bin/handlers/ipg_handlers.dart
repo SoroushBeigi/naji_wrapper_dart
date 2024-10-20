@@ -42,28 +42,35 @@ String generatePaymentHtml(PaymentResult paymentResult) {
   <body>
       <div class="payment-details">
           <div id="resultFrame">
-              <div id="header-payment" class="${paymentResult.status.toLowerCase()}">
+              <div id="header-payment" class="${paymentResult.status
+      .toLowerCase()}">
                   <span>${paymentResult.statusTitle}</span>
               </div>
               <div class="body-payment">
                   <div class="field-wrapper">
                       <label>مبلغ تراکنش</label>
-                      <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'}">
+                      <div class="${paymentResult.status == 'Canceled'
+      ? 'canceled-text'
+      : 'successful-text'}">
                           <span>${paymentResult.payment?.amount.toString()}</span> <span>ریال</span>
                       </div>
                   </div>
                   <div class="field-wrapper">
                       <label>تاریخ و زمان تراکنش</label>
-                      <span>${paymentResult.payment?.resultPaymentDateTime.toString()}</span>
+                      <span>${paymentResult.payment?.resultPaymentDateTime
+      .toString()}</span>
                   </div>
                   ${paymentResult.payment?.message != null ? '''
-                  <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'}">
+                  <div class="${paymentResult.status == 'Canceled'
+      ? 'canceled-text'
+      : 'successful-text'}">
                       <span>${paymentResult.payment?.message}</span>
                   </div>
                   ''' : ''}
               </div>
               <div id="footer-payment">
-                  <a class="redirect-button" href="${paymentResult.payment?.tag1 ?? 'default-link'}">بازگشت به برنامه امداد خودرو</a>
+                  <a class="redirect-button" href="${paymentResult.payment
+      ?.tag1 ?? 'default-link'}">بازگشت به برنامه امداد خودرو</a>
               </div>
           </div>
       </div>
@@ -75,7 +82,7 @@ String generatePaymentHtml(PaymentResult paymentResult) {
 Future<Response> time(Request request) async {
   final response = await IpgNetworkModule.instance.dio.get('/v1/Time');
   final najiResponse =
-      NajiResponse(resultCode: 0, failures: [], data: response.data);
+  NajiResponse(resultCode: 0, failures: [], data: response.data);
   return Response.ok(najiResponse.getJson(),
       headers: {"Content-Type": "application/json"});
 }
@@ -108,7 +115,7 @@ Future<Response> payment(Request request) async {
 
   if (nationalCode == null) {
     final najiResponse =
-        NajiResponse(resultCode: 1, failures: ['کدملی یافت نشد.'], data: {});
+    NajiResponse(resultCode: 1, failures: ['کدملی یافت نشد.'], data: {});
     return Response.ok(najiResponse.getJson(),
         headers: {"Content-Type": "application/json"});
   }
@@ -123,20 +130,23 @@ Future<Response> payment(Request request) async {
   final int amount = await ServiceRepository.instance?.getPrice(serviceId) ?? 0;
   if (amount == 0) {
     final najiResponse =
-        NajiResponse(resultCode: 1, failures: ['قیمت یافت نشد.'], data: {});
+    NajiResponse(resultCode: 1, failures: ['قیمت یافت نشد.'], data: {});
     return Response.ok(najiResponse.getJson(),
         headers: {"Content-Type": "application/json"});
   }
 
   final localDate = await IpgNetworkModule.instance.dio.get('/v1/Time');
   final String refId;
-  final localInvoiceId = DateTime.now().microsecondsSinceEpoch;
+  final localInvoiceId = DateTime
+      .now()
+      .microsecondsSinceEpoch;
   final tokenTime = DateTime.now();
   final Map<String, dynamic> requestJson;
   final int status;
   final String message;
   final callBackUrl =
-      "${Constants.publicUrl}:${Constants.port}/callback?localInvoiceId=$localInvoiceId";
+      "${Constants.publicUrl}:${Constants
+      .port}/callback?localInvoiceId=$localInvoiceId";
   try {
     requestJson = {
       'merchantConfigurationId': Constants.merchantConfigurationId,
@@ -270,7 +280,7 @@ Future<Response> callback(Request request) async {
       print('tranresult 200 ');
       //success
       final invoice =
-          await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
+      await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
       if (invoice == null) {
         print('invoice null ');
         return Response.ok(
@@ -318,7 +328,8 @@ Future<Response> callback(Request request) async {
       <body>
           <h1>عملیات ناموفق سرویس دهنده</h1>
           <p>سرویس موردنظر انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.</p>
-           <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}" class="button">بازگشت به برنامه</a>
+           <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice
+            .refId}" class="button">بازگشت به برنامه</a>
       </body>
     </html>
     ''';
@@ -372,31 +383,33 @@ Future<Response> callback(Request request) async {
             statusTitle: 'تراکنش موفق',
             payment: Payment(
               amount: int.parse(invoice.amount ?? '0'),
-              resultPaymentDateTime: invoice.resultpay_datetime.toString() ?? '',
+              resultPaymentDateTime:
+              invoice.resultpay_datetime.toString() ?? '',
               message: 'پرداخت موفق',
-              tag1: 'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
+              tag1:
+              'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
             )));
 
-    //     final successHtml = '''
-    // <!DOCTYPE html>
-    // <html>
-    //   <head>
-    //     <title>نتیجه تراکنش</title>
-    //     <style>
-    //       body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
-    //       .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    //       .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-    //     </style>
-    //   </head>
-    //   <body>
-    //     <div class="container">
-    //       <h1>عملیات موفق</h1>
-    //       <p>تراکنش با موفقیت انجام شد</p>
-    //       <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}" class="button">بازگشت به برنامه</a>
-    //     </div>
-    //   </body>
-    // </html>
-    // ''';
+        //     final successHtml = '''
+        // <!DOCTYPE html>
+        // <html>
+        //   <head>
+        //     <title>نتیجه تراکنش</title>
+        //     <style>
+        //       body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+        //       .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        //       .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+        //     </style>
+        //   </head>
+        //   <body>
+        //     <div class="container">
+        //       <h1>عملیات موفق</h1>
+        //       <p>تراکنش با موفقیت انجام شد</p>
+        //       <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}" class="button">بازگشت به برنامه</a>
+        //     </div>
+        //   </body>
+        // </html>
+        // ''';
         return Response.ok(successHtml, headers: {
           HttpHeaders.contentTypeHeader: 'text/html',
         });
@@ -498,7 +511,7 @@ Future<Response> serviceResult(Request request) async {
             data: {}).getJson(),
         headers: {"Content-Type": "application/json"});
   }
-  if (!Constants.isTesting) {
+  if (!Constants.noPayment) {
     final decodedNajiResult = jsonDecode(invoice.najiResult ?? '');
     if (decodedNajiResult['resultStatus'].toString() != '0') {
       return Response.ok(
@@ -512,10 +525,10 @@ Future<Response> serviceResult(Request request) async {
 
   final json = jsonDecode(invoice.najiResult!);
   if (json == null || json == {}) {
-    if (Constants.isTesting) {
+    if (Constants.noPayment) {
       final najiStatus = await doNajiRequest(invoice);
       final readInvoice =
-          await InvoiceRepository.instance?.getByRefId(invoice.refId ?? '');
+      await InvoiceRepository.instance?.getByRefId(invoice.refId ?? '');
       final testingJson = jsonDecode(readInvoice!.najiResult!);
       if (testingJson['resultStatus'] != 0) {
         return Response.ok(
@@ -528,52 +541,63 @@ Future<Response> serviceResult(Request request) async {
 
       return Response.ok(
           NajiResponse(resultCode: 0, failures: [], data: {
-            'negativePoint': invoice.serviceId == '1' ? NegativePointMapper().map(NajiNegativePointModel.fromJson(testingJson)) : {},
-            'licensePlates':
-            invoice.serviceId == '2' ? LicensePlatesMapper()
-                .mapList((jsonDecode(testingJson['result']) as List<dynamic>)
-                .map(
-                  (e) => NajiLicensesPlateModel.fromJson(e),
-            )
-                .toList()) : {},
-            'drivingLicences': invoice.serviceId == '3'
-                ? DrivingLicenseMapper()
-                    .mapList((jsonDecode(testingJson['result']) as List<dynamic>)
-                        .map(
-                          (e) => NajiDrivingLicensesModel.fromJson(e),
-                        )
-                        .toList())
+            'negativePoint': invoice.serviceId == '1'
+                ? NegativePointMapper()
+                .map(NajiNegativePointModel.fromJson(testingJson))
                 : {},
-            'vehiclesViolations':
-                invoice.serviceId == '4' ? {
-                  'violations':VehicleViolationsMapper()
-                      .mapList((jsonDecode(testingJson['result'])['violations'] as List<dynamic>)
+            'licensePlates': invoice.serviceId == '2'
+                ? LicensePlatesMapper().mapList(
+                (jsonDecode(testingJson['result']) as List<dynamic>)
+                    .map(
+                      (e) => NajiLicensesPlateModel.fromJson(e),
+                )
+                    .toList())
+                : {},
+            'drivingLicences': invoice.serviceId == '3'
+                ? DrivingLicenseMapper().mapList(
+                (jsonDecode(testingJson['result']) as List<dynamic>)
+                    .map(
+                      (e) => NajiDrivingLicensesModel.fromJson(e),
+                )
+                    .toList())
+                : {},
+            'vehiclesViolations': invoice.serviceId == '4'
+                ? {
+              'violations': VehicleViolationsMapper().mapList(
+                  (jsonDecode(testingJson['result'])['violations']
+                  as List<dynamic>)
                       .map(
                         (e) => ViolationModel.fromJson(e),
                   )
                       .toList()),
-
-                  'updateViolationsDate':RowOfData(
-                    title: 'تاریخ استعلام خلافی',
-                    svg: '$url/svg/calendar_month.svg',
-                    description: jsonDecode(testingJson['result'])['updateViolationsDate'],
-                  ).toJson(),
-
-                  'plateChar':RowOfData(
-                    title: 'پلاک',
-                    svg: '$url/svg/directions_car.svg',
-                    description: jsonDecode(testingJson['result'])['plateChar'],
-                  ).toJson(),
-
-                  'inquirePrice':RowOfData(
-                    title: 'جمع کل خلافی',
-                    svg: '$url/svg/payments.svg',
-                    description: jsonDecode(testingJson['result'])['inquirePrice'],
-                  ).toJson(),
-
-                } : {},
-            'violationsAggregate': invoice.serviceId == '5' ? NegativePointMapper().map(NajiNegativePointModel.fromJson(testingJson)) : {},
-            'vehiclesDocumentsStatus': invoice.serviceId == '6' ? VehicleDocumentStatusMapper().map(NajiVehiclesDocumentsStatusModel.fromJson(testingJson)) : {},
+              'updateViolationsDate': RowOfData(
+                title: 'تاریخ استعلام خلافی',
+                svg: '$url/svg/calendar_month.svg',
+                description: jsonDecode(
+                    testingJson['result'])['updateViolationsDate'],
+              ).toJson(),
+              'plateChar': RowOfData(
+                title: 'پلاک',
+                svg: '$url/svg/directions_car.svg',
+                description:
+                jsonDecode(testingJson['result'])['plateChar'],
+              ).toJson(),
+              'inquirePrice': RowOfData(
+                title: 'جمع کل خلافی',
+                svg: '$url/svg/payments.svg',
+                description:
+                jsonDecode(testingJson['result'])['inquirePrice'],
+              ).toJson(),
+            }
+                : {},
+            'violationsAggregate': invoice.serviceId == '5'
+                ? ViolationsAggregateMapper().map(
+                NajiVehiclesViolationsAggregateModel.fromJson(testingJson))
+                : {},
+            'vehiclesDocumentsStatus': invoice.serviceId == '6'
+                ? VehicleDocumentStatusMapper()
+                .map(NajiVehiclesDocumentsStatusModel.fromJson(testingJson))
+                : {},
           }).getJson(),
           headers: {"Content-Type": "application/json"});
     } else {
@@ -594,52 +618,59 @@ Future<Response> serviceResult(Request request) async {
     }
     return Response.ok(
         NajiResponse(resultCode: 0, failures: [], data: {
-          'negativePoint': invoice.serviceId == '1' ? NegativePointMapper().map(NajiNegativePointModel.fromJson(json)) : {},
-          'licensePlates':
-              invoice.serviceId == '2' ? LicensePlatesMapper()
-                  .mapList((jsonDecode(json['result']) as List<dynamic>)
-                  .map(
-                    (e) => NajiLicensesPlateModel.fromJson(e),
-              )
-                  .toList()) : {},
+          'negativePoint': invoice.serviceId == '1'
+              ? NegativePointMapper().map(NajiNegativePointModel.fromJson(json))
+              : {},
+          'licensePlates': invoice.serviceId == '2'
+              ? LicensePlatesMapper()
+              .mapList((jsonDecode(json['result']) as List<dynamic>)
+              .map(
+                (e) => NajiLicensesPlateModel.fromJson(e),
+          )
+              .toList())
+              : {},
           'drivingLicences': invoice.serviceId == '3'
               ? DrivingLicenseMapper()
-                  .mapList((jsonDecode(json['result']) as List<dynamic>)
-                      .map(
-                        (e) => NajiDrivingLicensesModel.fromJson(e),
-                      )
-                      .toList())
+              .mapList((jsonDecode(json['result']) as List<dynamic>)
+              .map(
+                (e) => NajiDrivingLicensesModel.fromJson(e),
+          )
+              .toList())
               : {},
-          'vehiclesViolations':
-              invoice.serviceId == '4' ? {
-            'violations':VehicleViolationsMapper()
-                .mapList((jsonDecode(json['result']['violations']) as List<dynamic>)
-                .map(
-                  (e) => ViolationModel.fromJson(e),
-            )
-                .toList()),
-
-                'updateViolationsDate':RowOfData(
-                  title: 'تاریخ استعلام خلافی',
-                  svg: '$url/svg/calendar_month.svg',
-                  description: json['result']['updateViolationsDate'],
-                ).toJson(),
-
-                'plateChar':RowOfData(
-                  title: 'پلاک',
-                  svg: '$url/svg/directions_car.svg',
-                  description: json['result']['plateChar'],
-                ).toJson(),
-
-                'inquirePrice':RowOfData(
-                  title: 'جمع کل خلافی',
-                  svg: '$url/svg/payments.svg',
-                  description: json['result']['inquirePrice'],
-                ).toJson(),
-
-              } : {},
-          'violationsAggregate': invoice.serviceId == '5' ? NegativePointMapper().map(NajiNegativePointModel.fromJson(json)) : {},
-          'vehiclesDocumentsStatus': invoice.serviceId == '6' ? VehicleDocumentStatusMapper().map(NajiVehiclesDocumentsStatusModel.fromJson(json)) : {},
+          'vehiclesViolations': invoice.serviceId == '4'
+              ? {
+            'violations': VehicleViolationsMapper().mapList(
+                (jsonDecode(json['result']['violations'])
+                as List<dynamic>)
+                    .map(
+                      (e) => ViolationModel.fromJson(e),
+                )
+                    .toList()),
+            'updateViolationsDate': RowOfData(
+              title: 'تاریخ استعلام خلافی',
+              svg: '$url/svg/calendar_month.svg',
+              description: json['result']['updateViolationsDate'],
+            ).toJson(),
+            'plateChar': RowOfData(
+              title: 'پلاک',
+              svg: '$url/svg/directions_car.svg',
+              description: json['result']['plateChar'],
+            ).toJson(),
+            'inquirePrice': RowOfData(
+              title: 'جمع کل خلافی',
+              svg: '$url/svg/payments.svg',
+              description: json['result']['inquirePrice'],
+            ).toJson(),
+          }
+              : {},
+          'violationsAggregate': invoice.serviceId == '5'
+              ? ViolationsAggregateMapper().map(
+              NajiVehiclesViolationsAggregateModel.fromJson(json))
+              : {},
+          'vehiclesDocumentsStatus': invoice.serviceId == '6'
+              ? VehicleDocumentStatusMapper()
+              .map(NajiVehiclesDocumentsStatusModel.fromJson(json))
+              : {},
         }).getJson(),
         headers: {"Content-Type": "application/json"});
   }
@@ -668,30 +699,35 @@ Future<Response> serviceHistory(Request request) async {
         headers: {"Content-Type": "application/json"});
   }
   final invoiceList = await InvoiceRepository.instance?.getAllForUser(guid);
-  return Response.ok(
-      NajiResponse(resultCode: 0, failures: [], data: {
-        invoiceList
-            ?.map(
-              (invoice) => {
-                'refId': invoice.refId,
-                'serviceName': invoice.serviceName,
-                'rrn': invoice.rrn,
-                'date': gregorianToJalali(
-                  int.parse(invoice.localDate?.substring(0, 4) ?? '0'),
-                  int.parse(invoice.localDate?.substring(4, 6) ?? '0'),
-                  int.parse(invoice.localDate?.substring(6, 8) ?? '0'),
-                ).join('/'),
-                'time': '',
-                'hasNajiResult': (invoice.najiResult?.isNotEmpty ?? false)
-              },
-            )
-            //20241015 145128
-            .toList()
-      }).getJson(),
-      headers: {"Content-Type": "application/json"});
+  if (invoiceList?.isEmpty ?? true) {
+    return Response.ok(
+        NajiResponse(resultCode: 0, failures: [], data: {[]})
+            .getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
 
   return Response.ok(
-      NajiResponse(resultCode: 1, failures: ['کاربر یافت نشد'], data: {})
-          .getJson(),
+      NajiResponse(
+          resultCode: 0, failures: [], data: invoiceList?.map((invoice) {
+        String timePart = invoice.localDate?.split(' ')[1] ?? '';
+        final jalaliDate = gregorianToJalali(
+          int.parse(invoice.localDate?.substring(0, 4) ?? '0'),
+          int.parse(invoice.localDate?.substring(5, 7) ?? '0'),
+          int.parse(invoice.localDate?.substring(8, 10) ?? '0'),
+        ).join('/');
+        print(invoice.localDate?.substring(0, 4));
+        print(invoice.localDate?.substring(5, 7));
+        print(invoice.localDate?.substring(8, 10));
+        print(jalaliDate);
+        return {
+          'localInvoiceId': invoice.localInvoiceId ?? '',
+          'serviceName': invoice.serviceName ?? '',
+          'rrn': invoice.rrn ?? '',
+          'date': jalaliDate,
+          'time': timePart.substring(0,8),
+          'refId':invoice.refId,
+          'hasNajiResult': (invoice.najiResult?.isNotEmpty ?? false),
+        };
+      }).toList()).getJson(),
       headers: {"Content-Type": "application/json"});
 }
