@@ -147,6 +147,7 @@ class InvoiceRepository
       plateNumber: result[0][49].toString(),
       serviceName: result[0][50].toString(),
       najiResult: result[0][57].toString(),
+      resultpay_datetime:
 
     );
   }

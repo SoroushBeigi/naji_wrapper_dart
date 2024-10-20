@@ -495,13 +495,14 @@ Future<Response> callback(Request request) async {
         //   </body>
         // </html>
         // ''';
+        //TODO check and test!!
         return Response.ok( generatePaymentHtml( PaymentResult(
             status: invoice.payment_result==1? 'Successful':'Cancelled',
             statusTitle: invoice.payment_result==1? 'تراکنش موفق':'تراکنش ناموفق',
             payment: Payment(
               amount: int.parse(invoice.amount ?? '0'),
               resultPaymentDateTime:
-              invoice.resultpay_datetime.toString() ?? '',
+              invoice.payGateTranDate.toString() ?? '',
               message: invoice.payment_result==1? 'پرداخت موفق':'پرداخت ناموفق',
               callbackUrl:
               'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
