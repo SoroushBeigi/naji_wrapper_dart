@@ -124,9 +124,92 @@ class VehicleViolationsMapper extends ResultMapper<ViolationModel> {
           RowOfData(
               title: 'آیا برای این تخلف تصویر وجود دارید؟',
               svg: '$url/svg/image.svg',
-              description: (model.hasImage??false)? 'بله' : 'خیر'),
+              description: (model.hasImage ?? false) ? 'بله' : 'خیر'),
         ];
       }).toList();
+}
+
+class NegativePointMapper extends ResultMapper<NajiNegativePointModel> {
+  @override
+  List<RowOfData> map(model) => [
+        RowOfData(
+          title: 'نمره منفی',
+          svg: '$url/svg/do_not_disturb_on.svg',
+          description: model.negativePoint,
+        ),
+        RowOfData(
+          title: 'آیا اجازه رانندگی دارد',
+          svg: '$url/svg/pan_tool.svg',
+          description: model.isDrivingAllowed == null
+              ? '-'
+              : model.isDrivingAllowed == "true"
+                  ? 'بله'
+                  : 'خیر',
+        ),
+      ];
+}
+
+class ViolationsAggregateMapper extends ResultMapper<NajiVehiclesViolationsAggregateModel> {
+  @override
+  List<RowOfData> map(model) => [
+    RowOfData(
+      title: 'مبلغ حریمه',
+      svg: '$url/svg/payments.svg',
+      description: model.price ??'-',
+    ),
+    RowOfData(
+      title: 'وضعیت شکایت',
+      svg: '$url/svg/pan_tool.svg',
+      description: model.complaintStatus?? 'شکایت ندارد'
+    ),
+    RowOfData(
+        title: 'پلاک',
+        svg: '$url/svg/directions_car.svg',
+        description: model.plateChar??'-'
+    ),
+  ];
+}
+
+class VehicleDocumentStatusMapper extends ResultMapper<NajiVehiclesDocumentsStatusModel> {
+  @override
+  List<RowOfData> map(model) => [
+    RowOfData(
+      title: 'تاریخ صدور کارت',
+      svg: '$url/svg/calendar_month.svg',
+      description: model.cardPrintDate ??'-',
+    ),
+    RowOfData(
+        title: 'وضعیت ارسال کارت خودرو',
+        svg: '$url/svg/done.svg',
+        description: model.cardStatusTitle??'-'
+    ),
+    RowOfData(
+        title: 'بارکد پستی کارت خودرو',
+        svg: '$url/svg/barcode.svg',
+        description: model.cardPostalBarcode??'-'
+    ),
+    RowOfData(
+        title: 'تاریخ چاپ سند',
+        svg: '$url/svg/calendar_month.svg',
+        description: model.documentPrintDate?? '-'
+    ),
+    RowOfData(
+        title: 'وضعیت صدور سند',
+        svg: '$url/svg/done.svg',
+        description: model.documentStatusTitle??'-'
+    ),
+    RowOfData(
+        title: 'بارکد پستی سند',
+        svg: '$url/svg/barcode.svg',
+        description: model.documentPostalBarcode??'-'
+    ),
+    RowOfData(
+        title: 'پلاک',
+        svg: '$url/svg/directions_car.svg',
+        description: model.plateChar??'-'
+    ),
+
+  ];
 }
 
 class RowOfData {
@@ -234,9 +317,11 @@ class NajiVehiclesDocumentsStatusModel {
   final String? cardStatusTitle;
   final String? documentPrintDate;
   final String? documentStatusTitle;
+  final String? documentPostalBarcode;
   final String? plateChar;
   final int? resultStatus;
   final String? resultStatusMessage;
+
 
   NajiVehiclesDocumentsStatusModel(
       {this.cardPrintDate,
@@ -245,6 +330,7 @@ class NajiVehiclesDocumentsStatusModel {
       this.documentPrintDate,
       this.cardStatusTitle,
       this.plateChar,
+        this.documentPostalBarcode,
       this.resultStatus,
       this.resultStatusMessage});
 
@@ -259,6 +345,7 @@ class NajiVehiclesDocumentsStatusModel {
         documentStatusTitle: json["documentStatusTitle"],
         resultStatus: json["resultStatus"],
         resultStatusMessage: json["resultStatusMessage"],
+        documentPostalBarcode:json['documentPostalBarcode']
       );
 }
 
