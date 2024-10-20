@@ -70,9 +70,93 @@ String generatePaymentHtml(PaymentResult paymentResult) {
               </div>
               <div id="footer-payment">
                   <a class="redirect-button" href="${paymentResult.payment
-      ?.tag1 ?? 'default-link'}">بازگشت به برنامه امداد خودرو</a>
+      ?.callbackUrl ?? 'default-link'}">بازگشت به برنامه امداد خودرو</a>
               </div>
           </div>
+          <style>
+            .payment-details {
+                height: 100%;
+                width: 100%;
+                background: #aaa;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            #resultFrame {
+                width: 100%;
+                max-width: 23rem;
+                text-align.canceled center;
+                border: 1px solid #aaaa;
+                font-family: "IRANSans(FaNum)";
+            }
+            #header-payment {
+                padding: 1rem;
+                font-weight: 600;
+                text-align: center;
+                background: #f1f2f4;
+                font-size: 1.3rem;
+                color: #343434;
+                border: 1px solid #ddd;
+                border-radius: 1rem;
+                box-shadow: 0 0 5px 2px #999;
+            }
+            .body-payment {
+                background: #fff;
+                border: 1px solid #aaa;
+                border-radius: 1rem;
+                margin: .5rem 0;
+                padding: 1rem;
+                box-shadow: 0 0 5px 2px #999;
+            }
+            #header-payment.successful {
+                background-color: #28a745;
+                color: #ffffff;
+                border-color: #28a745;
+            }
+            #header-payment.canceled {
+                background-color: #dc3545;
+                color: #ffffff;
+                border-color: #dc3545;
+            }
+            .redirect-button {
+                display: block;
+                background-color: #f1f2f4;
+                color: #F27128;
+                font-weight: 600;
+                text-decoration: none;
+                border-radius: 1rem;
+                padding: 1rem;
+                width: 100%;
+                margin: auto;
+                font-size: 1rem;
+                text-align: center;
+            }
+            .field-wrapper {
+                margin-bottom: 1rem;
+                color: #343434;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 1rem;
+            }
+            .field-wrapper span, .field-wrapper label {
+                font-weight: 600;
+                color: #888;
+                font-size: 1rem;
+            }
+            .successful-text > span {
+                color: #28a745;
+                font-size: 1rem;
+                text-align: center;
+            }
+            .canceled-text > span {
+                color: #dc3545;
+                font-size: 1rem;
+                text-align: center;
+            }
+        </style>
       </div>
   </body>
   </html>
@@ -281,6 +365,7 @@ Future<Response> callback(Request request) async {
       //success
       final invoice =
       await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
+
       if (invoice == null) {
         print('invoice null ');
         return Response.ok(
@@ -290,6 +375,7 @@ Future<Response> callback(Request request) async {
                 data: {}).getJson(),
             headers: {"Content-Type": "application/json"});
       }
+
       final najiStatus = await doNajiRequest(invoice);
       if (najiStatus != 0) {
         print('Naji not 0 status');
@@ -314,26 +400,36 @@ Future<Response> callback(Request request) async {
               reverse_result: reverseResult.statusCode == 200 ? 1 : 0,
               reverse_msg: reverseResult.statusMessage,
             ));
-        final najiFailureHtml = '''
-      <!DOCTYPE html>
-    <html>
-      <head>
-        <title>نتیجه تراکنش</title>
-        <style>
-          body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
-          .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
-          .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-        </style>
-      </head>
-      <body>
-          <h1>عملیات ناموفق سرویس دهنده</h1>
-          <p>سرویس موردنظر انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.</p>
-           <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice
-            .refId}" class="button">بازگشت به برنامه</a>
-      </body>
-    </html>
-    ''';
-        return Response.ok(najiFailureHtml, headers: {
+    //     final najiFailureHtml = '''
+    //   <!DOCTYPE html>
+    // <html>
+    //   <head>
+    //     <title>نتیجه تراکنش</title>
+    //     <style>
+    //       body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+    //       .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    //       .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+    //     </style>
+    //   </head>
+    //   <body>
+    //       <h1>عملیات ناموفق سرویس دهنده</h1>
+    //       <p>سرویس موردنظر انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.</p>
+    //        <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice
+    //         .refId}" class="button">بازگشت به برنامه</a>
+    //   </body>
+    // </html>
+    // ''';
+        return Response.ok(generatePaymentHtml(PaymentResult(
+            status: invoice.verify_result==1? 'Successful':'Canceled',
+            statusTitle: 'عملیات ناموفق سرویس دهنده',
+            payment: Payment(
+              amount: int.parse(invoice.amount ?? '0'),
+              resultPaymentDateTime:
+              invoice.resultpay_datetime.toString() ?? '',
+              message: 'سرویس موردنظر انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.',
+              callbackUrl:
+              'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
+            ))), headers: {
           HttpHeaders.contentTypeHeader: 'text/html',
         });
       } else {
@@ -378,17 +474,6 @@ Future<Response> callback(Request request) async {
             ));
         print('settlement code: ${verifyResult.statusCode} ');
 
-        final successHtml = generatePaymentHtml(PaymentResult(
-            status: 'successful',
-            statusTitle: 'تراکنش موفق',
-            payment: Payment(
-              amount: int.parse(invoice.amount ?? '0'),
-              resultPaymentDateTime:
-              invoice.resultpay_datetime.toString() ?? '',
-              message: 'پرداخت موفق',
-              tag1:
-              'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
-            )));
 
         //     final successHtml = '''
         // <!DOCTYPE html>
@@ -410,21 +495,46 @@ Future<Response> callback(Request request) async {
         //   </body>
         // </html>
         // ''';
-        return Response.ok(successHtml, headers: {
+        return Response.ok( generatePaymentHtml( PaymentResult(
+            status: invoice.payment_result==1? 'Successful':'Cancelled',
+            statusTitle: invoice.payment_result==1? 'تراکنش موفق':'تراکنش ناموفق',
+            payment: Payment(
+              amount: int.parse(invoice.amount ?? '0'),
+              resultPaymentDateTime:
+              invoice.resultpay_datetime.toString() ?? '',
+              message: invoice.payment_result==1? 'پرداخت موفق':'پرداخت ناموفق',
+              callbackUrl:
+              'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
+            ))), headers: {
           HttpHeaders.contentTypeHeader: 'text/html',
         });
       }
     } else {
-      print('TRANRESULT NOT 200 ');
-      //failure
-      //TODO
-      return Response.ok(failureHtml, headers: {
+      //TODO: modify error, maybe we should read from db to fill fields heere.
+      return Response.ok( generatePaymentHtml( PaymentResult(
+          status:'Cancelled',
+          statusTitle: 'تراکنش ناموفق',
+          payment: Payment(
+            amount: 0,
+            resultPaymentDateTime: '',
+            message:'پرداخت ناموفق',
+            callbackUrl: '',
+          ))), headers: {
         HttpHeaders.contentTypeHeader: 'text/html',
       });
     }
   } catch (e) {
     print(e);
-    return Response.ok(failureHtml, headers: {
+    //TODO: modify error, maybe we should read from db to fill fields heere.
+    return Response.ok( generatePaymentHtml( PaymentResult(
+        status:'Cancelled',
+        statusTitle: 'تراکنش ناموفق',
+        payment: Payment(
+          amount: 0,
+          resultPaymentDateTime: '',
+          message:'پرداخت ناموفق',
+          callbackUrl: '',
+        ))), headers: {
       HttpHeaders.contentTypeHeader: 'text/html',
     });
   }

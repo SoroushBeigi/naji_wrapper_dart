@@ -7,6 +7,6 @@ class Constants{
   static const merchantConfigurationId = 227609;
   static const publicUrl = 'http://46.209.222.131';
   //Set true to bypass the payment!
-  static const noPayment=true;
+  static const noPayment=false;
   static const isProduction=true;
 }

@@ -138,6 +138,7 @@ class InvoiceRepository
       cardNumber: result[0][8].toString(),
       amount: result[0][10].toString(),
       refId: result[0][11].toString(),
+      payment_result: int.tryParse(result[0][13].toString()),
       localInvoiceId: result[0][15].toString(),
       payGateTranID: result[0][17].toString(),
       rrn: result[0][18].toString(),
@@ -146,6 +147,7 @@ class InvoiceRepository
       plateNumber: result[0][49].toString(),
       serviceName: result[0][50].toString(),
       najiResult: result[0][57].toString(),
+
     );
   }
 

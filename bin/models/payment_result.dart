@@ -4,7 +4,7 @@ class Payment {
   final String? message;
   final String? bankReferenceNo;
   final String? bankTraceNo;
-  final String? tag1;
+  final String? callbackUrl;
 
   Payment({
     required this.amount,
@@ -12,7 +12,7 @@ class Payment {
     this.message,
     this.bankReferenceNo,
     this.bankTraceNo,
-    this.tag1,
+    this.callbackUrl,
   });
 }
 
