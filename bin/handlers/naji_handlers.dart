@@ -4,8 +4,6 @@ import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import '../naji_response.dart';
 import '../clients/naji_client.dart';
-import '../db/user_repository.dart';
-import '../models/user_model.dart';
 
 Future<Response> validateUser(Request request) async {
   final String? nationalCode;

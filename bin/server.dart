@@ -9,12 +9,10 @@ import 'db/service_repository.dart';
 import 'db/invoice_repository.dart';
 import 'constants.dart';
 import 'package:shelf_static/shelf_static.dart';
-import 'package:logging/logging.dart';
+import 'logger.dart';
 
 void main() async {
-  // initLogging();
-  // final log = Logger('NajiWrapper');
-
+  setupLogging();
 
   final router = NajiRouter();
   final ip = InternetAddress.anyIPv4;
@@ -34,14 +32,14 @@ void main() async {
   final staticHandler = createStaticHandler('../assets', defaultDocument: null);
 
   final handler = Pipeline()
-      .addMiddleware(logRequests())
+      .addMiddleware(logRequestsAndResponses())
       .addHandler(Cascade().add(staticHandler).add(router.router.call).handler);
 
   final port = int.parse(Constants.port);
   final server = await serve(handler, ip, port);
-  print('Server listening on ip $ip port ${server.port}');
-  // log.info('Server listening on ip $ip port ${server.port}');
+  logger.info('Server listening on ip $ip port ${server.port}');
 }
+
 
 // void initLogging() {
 //   Logger.root.level = Level.ALL;

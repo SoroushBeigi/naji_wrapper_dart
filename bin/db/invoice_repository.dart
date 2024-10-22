@@ -69,7 +69,7 @@ class InvoiceRepository
   Future<List<InvoiceData>?> getAllForUser(String guid) async {
     final result = await connection.execute(
         Sql.named(
-            "SELECT order_desc, tag3, tracking_code, order_datetime, extra_data, request_referenceid FROM invoices WHERE paymenter_email = @guid"),
+            "SELECT order_desc, tag3, tracking_code, order_datetime, extra_data, request_referenceid, paymenter_mobile, paymenter_natcode, tag2, tag1 FROM invoices WHERE paymenter_email = @guid"),
         parameters: {'guid': guid});
     if (result.isEmpty) {
       return null;
@@ -82,7 +82,11 @@ class InvoiceRepository
             rrn: element[2]?.toString() ,
             localDate: element[3].toString(),
             najiResult: element[4].toString(),
-            refId: element[5].toString()
+            refId: element[5].toString(),
+            mobileNumber: element[6]?.toString(),
+            nationalCode: element[7]?.toString(),
+            plateNumber: element[8]?.toString(),
+            licenseNumber: element[9]?.toString(),
           ),
         )
         .toList();

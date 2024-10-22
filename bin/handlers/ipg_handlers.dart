@@ -42,35 +42,28 @@ String generatePaymentHtml(PaymentResult paymentResult) {
   <body>
       <div class="payment-details">
           <div id="resultFrame">
-              <div id="header-payment" class="${paymentResult.status
-      .toLowerCase()}">
+              <div id="header-payment" class="${paymentResult.status.toLowerCase()}">
                   <span>${paymentResult.statusTitle}</span>
               </div>
               <div class="body-payment">
                   <div class="field-wrapper">
                       <label>مبلغ تراکنش</label>
-                      <div class="${paymentResult.status == 'Canceled'
-      ? 'canceled-text'
-      : 'successful-text'}">
+                      <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'}">
                           <span>${paymentResult.payment?.amount.toString()}</span> <span>ریال</span>
                       </div>
                   </div>
                   <div class="field-wrapper">
                       <label>تاریخ و زمان تراکنش</label>
-                      <span>${paymentResult.payment?.resultPaymentDateTime
-      .toString()}</span>
+                      <span>${paymentResult.payment?.resultPaymentDateTime.toString()}</span>
                   </div>
                   ${paymentResult.payment?.message != null ? '''
-                  <div class="${paymentResult.status == 'Canceled'
-      ? 'canceled-text'
-      : 'successful-text'}">
+                  <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'}">
                       <span>${paymentResult.payment?.message}</span>
                   </div>
                   ''' : ''}
               </div>
               <div id="footer-payment">
-                  <a class="redirect-button" href="${paymentResult.payment
-      ?.callbackUrl ?? 'default-link'}">بازگشت به برنامه امداد خودرو</a>
+                  <a class="redirect-button" href="${paymentResult.payment?.callbackUrl ?? 'default-link'}">بازگشت به برنامه امداد خودرو</a>
               </div>
           </div>
           <style>
@@ -166,7 +159,7 @@ String generatePaymentHtml(PaymentResult paymentResult) {
 Future<Response> time(Request request) async {
   final response = await IpgNetworkModule.instance.dio.get('/v1/Time');
   final najiResponse =
-  NajiResponse(resultCode: 0, failures: [], data: response.data);
+      NajiResponse(resultCode: 0, failures: [], data: response.data);
   return Response.ok(najiResponse.getJson(),
       headers: {"Content-Type": "application/json"});
 }
@@ -199,7 +192,7 @@ Future<Response> payment(Request request) async {
 
   if (nationalCode == null) {
     final najiResponse =
-    NajiResponse(resultCode: 1, failures: ['کدملی یافت نشد.'], data: {});
+        NajiResponse(resultCode: 1, failures: ['کدملی یافت نشد.'], data: {});
     return Response.ok(najiResponse.getJson(),
         headers: {"Content-Type": "application/json"});
   }
@@ -214,23 +207,20 @@ Future<Response> payment(Request request) async {
   final int amount = await ServiceRepository.instance?.getPrice(serviceId) ?? 0;
   if (amount == 0) {
     final najiResponse =
-    NajiResponse(resultCode: 1, failures: ['قیمت یافت نشد.'], data: {});
+        NajiResponse(resultCode: 1, failures: ['قیمت یافت نشد.'], data: {});
     return Response.ok(najiResponse.getJson(),
         headers: {"Content-Type": "application/json"});
   }
 
   final localDate = await IpgNetworkModule.instance.dio.get('/v1/Time');
   final String refId;
-  final localInvoiceId = DateTime
-      .now()
-      .microsecondsSinceEpoch;
+  final localInvoiceId = DateTime.now().microsecondsSinceEpoch;
   final tokenTime = DateTime.now();
   final Map<String, dynamic> requestJson;
   final int status;
   final String message;
   final callBackUrl =
-      "${Constants.publicUrl}:${Constants
-      .port}/callback?localInvoiceId=$localInvoiceId";
+      "${Constants.publicUrl}:${Constants.port}/callback?localInvoiceId=$localInvoiceId";
   try {
     requestJson = {
       'merchantConfigurationId': Constants.merchantConfigurationId,
@@ -364,7 +354,7 @@ Future<Response> callback(Request request) async {
       print('tranresult 200 ');
       //success
       final invoice =
-      await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
+          await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
 
       if (invoice == null) {
         print('invoice null ');
@@ -400,38 +390,41 @@ Future<Response> callback(Request request) async {
               reverse_result: reverseResult.statusCode == 200 ? 1 : 0,
               reverse_msg: reverseResult.statusMessage,
             ));
-    //     final najiFailureHtml = '''
-    //   <!DOCTYPE html>
-    // <html>
-    //   <head>
-    //     <title>نتیجه تراکنش</title>
-    //     <style>
-    //       body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
-    //       .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    //       .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-    //     </style>
-    //   </head>
-    //   <body>
-    //       <h1>عملیات ناموفق سرویس دهنده</h1>
-    //       <p>سرویس موردنظر انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.</p>
-    //        <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice
-    //         .refId}" class="button">بازگشت به برنامه</a>
-    //   </body>
-    // </html>
-    // ''';
-        return Response.ok(generatePaymentHtml(PaymentResult(
-            status: invoice.verify_result==1? 'Successful':'Canceled',
-            statusTitle: 'عملیات ناموفق سرویس دهنده',
-            payment: Payment(
-              amount: int.parse(invoice.amount ?? '0'),
-              resultPaymentDateTime:
-              invoice.resultpay_datetime.toString() ?? '',
-              message: 'سرویس موردنظر انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.',
-              callbackUrl:
-              'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
-            ))), headers: {
-          HttpHeaders.contentTypeHeader: 'text/html',
-        });
+        //     final najiFailureHtml = '''
+        //   <!DOCTYPE html>
+        // <html>
+        //   <head>
+        //     <title>نتیجه تراکنش</title>
+        //     <style>
+        //       body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+        //       .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        //       .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+        //     </style>
+        //   </head>
+        //   <body>
+        //       <h1>عملیات ناموفق سرویس دهنده</h1>
+        //       <p>سرویس موردنظر انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.</p>
+        //        <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice
+        //         .refId}" class="button">بازگشت به برنامه</a>
+        //   </body>
+        // </html>
+        // ''';
+        return Response.ok(
+            generatePaymentHtml(PaymentResult(
+                status: invoice.verify_result == 1 ? 'Successful' : 'Canceled',
+                statusTitle: 'عملیات ناموفق سرویس دهنده',
+                payment: Payment(
+                  amount: int.parse(invoice.amount ?? '0'),
+                  resultPaymentDateTime:
+                      invoice.resultpay_datetime.toString() ?? '',
+                  message:
+                      'سرویس موردنظر انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.',
+                  callbackUrl:
+                      'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
+                ))),
+            headers: {
+              HttpHeaders.contentTypeHeader: 'text/html',
+            });
       } else {
         print('Naji 0 status ');
         final verifyTime = DateTime.now();
@@ -474,7 +467,6 @@ Future<Response> callback(Request request) async {
             ));
         print('settlement code: ${verifyResult.statusCode} ');
 
-
         //     final successHtml = '''
         // <!DOCTYPE html>
         // <html>
@@ -496,48 +488,91 @@ Future<Response> callback(Request request) async {
         // </html>
         // ''';
         //TODO check and test!!
-        return Response.ok( generatePaymentHtml( PaymentResult(
-            status: invoice.payment_result==1? 'Successful':'Cancelled',
-            statusTitle: invoice.payment_result==1? 'تراکنش موفق':'تراکنش ناموفق',
+        return Response.ok(
+            generatePaymentHtml(PaymentResult(
+                status:
+                    invoice.payment_result == 1 ? 'Successful' : 'Cancelled',
+                statusTitle: invoice.payment_result == 1
+                    ? 'تراکنش موفق'
+                    : 'تراکنش ناموفق',
+                payment: Payment(
+                  amount: int.parse(invoice.amount ?? '0'),
+                  resultPaymentDateTime:
+                      invoice.payGateTranDate.toString() ?? '',
+                  message: invoice.payment_result == 1
+                      ? 'پرداخت موفق'
+                      : 'پرداخت ناموفق',
+                  callbackUrl:
+                      'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
+                ))),
+            headers: {
+              HttpHeaders.contentTypeHeader: 'text/html',
+            });
+      }
+    } else {
+      final invoice = await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
+      if (invoice == null) {
+        print('invoice null ');
+        return Response.ok(
+            NajiResponse(
+                resultCode: 1,
+                failures: ['خطای پایگاه داده'],
+                data: {}).getJson(),
+            headers: {"Content-Type": "application/json"});
+      }
+      return Response.ok(
+          generatePaymentHtml(PaymentResult(
+              status:
+              invoice.payment_result == 1 ? 'Successful' : 'Cancelled',
+              statusTitle: invoice.payment_result == 1
+                  ? 'تراکنش موفق'
+                  : 'تراکنش ناموفق',
+              payment: Payment(
+                amount: int.parse(invoice.amount ?? '0'),
+                resultPaymentDateTime:
+                invoice.payGateTranDate.toString() ?? '',
+                message: invoice.payment_result == 1
+                    ? 'پرداخت موفق'
+                    : 'پرداخت ناموفق',
+                callbackUrl:
+                'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
+              ))),
+          headers: {
+            HttpHeaders.contentTypeHeader: 'text/html',
+          });
+    }
+  } catch (e) {
+    print(e);
+    final invoice = await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
+    if (invoice == null) {
+      print('invoice null ');
+      return Response.ok(
+          NajiResponse(
+              resultCode: 1,
+              failures: ['خطای پایگاه داده'],
+              data: {}).getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
+    return Response.ok(
+        generatePaymentHtml(PaymentResult(
+            status:
+            invoice.payment_result == 1 ? 'Successful' : 'Cancelled',
+            statusTitle: invoice.payment_result == 1
+                ? 'تراکنش موفق'
+                : 'تراکنش ناموفق',
             payment: Payment(
               amount: int.parse(invoice.amount ?? '0'),
               resultPaymentDateTime:
               invoice.payGateTranDate.toString() ?? '',
-              message: invoice.payment_result==1? 'پرداخت موفق':'پرداخت ناموفق',
+              message: invoice.payment_result == 1
+                  ? 'پرداخت موفق'
+                  : 'پرداخت ناموفق',
               callbackUrl:
               'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
-            ))), headers: {
+            ))),
+        headers: {
           HttpHeaders.contentTypeHeader: 'text/html',
         });
-      }
-    } else {
-      //TODO: modify error, maybe we should read from db to fill fields heere.
-      return Response.ok( generatePaymentHtml( PaymentResult(
-          status:'Cancelled',
-          statusTitle: 'تراکنش ناموفق',
-          payment: Payment(
-            amount: 0,
-            resultPaymentDateTime: '',
-            message:'پرداخت ناموفق',
-            callbackUrl: '',
-          ))), headers: {
-        HttpHeaders.contentTypeHeader: 'text/html',
-      });
-    }
-  } catch (e) {
-    print(e);
-    //TODO: modify error, maybe we should read from db to fill fields heere.
-    return Response.ok( generatePaymentHtml( PaymentResult(
-        status:'Cancelled',
-        statusTitle: 'تراکنش ناموفق',
-        payment: Payment(
-          amount: 0,
-          resultPaymentDateTime: '',
-          message:'پرداخت ناموفق',
-          callbackUrl: '',
-        ))), headers: {
-      HttpHeaders.contentTypeHeader: 'text/html',
-    });
   }
 }
 
@@ -639,7 +674,7 @@ Future<Response> serviceResult(Request request) async {
     if (Constants.noPayment) {
       final najiStatus = await doNajiRequest(invoice);
       final readInvoice =
-      await InvoiceRepository.instance?.getByRefId(invoice.refId ?? '');
+          await InvoiceRepository.instance?.getByRefId(invoice.refId ?? '');
       final testingJson = jsonDecode(readInvoice!.najiResult!);
       if (testingJson['resultStatus'] != 0) {
         return Response.ok(
@@ -654,23 +689,23 @@ Future<Response> serviceResult(Request request) async {
           NajiResponse(resultCode: 0, failures: [], data: {
             'negativePoint': invoice.serviceId == '1'
                 ? NegativePointMapper()
-                .map(NajiNegativePointModel.fromJson(testingJson))
+                    .map(NajiNegativePointModel.fromJson(testingJson))
                 : {},
             'licensePlates': invoice.serviceId == '2'
                 ? LicensePlatesMapper().mapList(
-                (jsonDecode(testingJson['result']) as List<dynamic>)
-                    .map(
-                      (e) => NajiLicensesPlateModel.fromJson(e),
-                )
-                    .toList())
+                    (jsonDecode(testingJson['result']) as List<dynamic>)
+                        .map(
+                          (e) => NajiLicensesPlateModel.fromJson(e),
+                        )
+                        .toList())
                 : {},
             'drivingLicences': invoice.serviceId == '3'
                 ? DrivingLicenseMapper().mapList(
-                (jsonDecode(testingJson['result']) as List<dynamic>)
-                    .map(
-                      (e) => NajiDrivingLicensesModel.fromJson(e),
-                )
-                    .toList())
+                    (jsonDecode(testingJson['result']) as List<dynamic>)
+                        .map(
+                          (e) => NajiDrivingLicensesModel.fromJson(e),
+                        )
+                        .toList())
                 : {},
             'vehiclesViolations': invoice.serviceId == '4'
                 ? {
@@ -684,30 +719,27 @@ Future<Response> serviceResult(Request request) async {
               'updateViolationsDate': RowOfData(
                 title: 'تاریخ استعلام خلافی',
                 svg: '$url/svg/calendar_month.svg',
-                description: jsonDecode(
-                    testingJson['result'])['updateViolationsDate'],
+                description: jsonDecode(testingJson['result'])['updateViolationsDate'],
               ).toJson(),
               'plateChar': RowOfData(
                 title: 'پلاک',
                 svg: '$url/svg/directions_car.svg',
-                description:
-                jsonDecode(testingJson['result'])['plateChar'],
+                description: jsonDecode(testingJson['result'])['plateChar'],
               ).toJson(),
               'inquirePrice': RowOfData(
                 title: 'جمع کل خلافی',
                 svg: '$url/svg/payments.svg',
-                description:
-                jsonDecode(testingJson['result'])['inquirePrice'],
+                description: jsonDecode(testingJson['result'])['inquirePrice'],
               ).toJson(),
             }
                 : {},
             'violationsAggregate': invoice.serviceId == '5'
                 ? ViolationsAggregateMapper().map(
-                NajiVehiclesViolationsAggregateModel.fromJson(testingJson))
+                    NajiVehiclesViolationsAggregateModel.fromJson(testingJson))
                 : {},
             'vehiclesDocumentsStatus': invoice.serviceId == '6'
                 ? VehicleDocumentStatusMapper()
-                .map(NajiVehiclesDocumentsStatusModel.fromJson(testingJson))
+                    .map(NajiVehiclesDocumentsStatusModel.fromJson(testingJson))
                 : {},
           }).getJson(),
           headers: {"Content-Type": "application/json"});
@@ -734,53 +766,53 @@ Future<Response> serviceResult(Request request) async {
               : {},
           'licensePlates': invoice.serviceId == '2'
               ? LicensePlatesMapper()
-              .mapList((jsonDecode(json['result']) as List<dynamic>)
-              .map(
-                (e) => NajiLicensesPlateModel.fromJson(e),
-          )
-              .toList())
+                  .mapList((jsonDecode(json['result']) as List<dynamic>)
+                      .map(
+                        (e) => NajiLicensesPlateModel.fromJson(e),
+                      )
+                      .toList())
               : {},
           'drivingLicences': invoice.serviceId == '3'
               ? DrivingLicenseMapper()
-              .mapList((jsonDecode(json['result']) as List<dynamic>)
-              .map(
-                (e) => NajiDrivingLicensesModel.fromJson(e),
-          )
-              .toList())
+                  .mapList((jsonDecode(json['result']) as List<dynamic>)
+                      .map(
+                        (e) => NajiDrivingLicensesModel.fromJson(e),
+                      )
+                      .toList())
               : {},
           'vehiclesViolations': invoice.serviceId == '4'
               ? {
-            'violations': VehicleViolationsMapper().mapList(
-                (jsonDecode(json['result']['violations'])
-                as List<dynamic>)
-                    .map(
-                      (e) => ViolationModel.fromJson(e),
-                )
-                    .toList()),
-            'updateViolationsDate': RowOfData(
-              title: 'تاریخ استعلام خلافی',
-              svg: '$url/svg/calendar_month.svg',
-              description: json['result']['updateViolationsDate'],
-            ).toJson(),
-            'plateChar': RowOfData(
-              title: 'پلاک',
-              svg: '$url/svg/directions_car.svg',
-              description: json['result']['plateChar'],
-            ).toJson(),
-            'inquirePrice': RowOfData(
-              title: 'جمع کل خلافی',
-              svg: '$url/svg/payments.svg',
-              description: json['result']['inquirePrice'],
-            ).toJson(),
-          }
+                  'violations': VehicleViolationsMapper().mapList(
+                      (jsonDecode(json['result']['violations'])
+                              as List<dynamic>)
+                          .map(
+                            (e) => ViolationModel.fromJson(e),
+                          )
+                          .toList()),
+                  'updateViolationsDate': RowOfData(
+                    title: 'تاریخ استعلام خلافی',
+                    svg: '$url/svg/calendar_month.svg',
+                    description: json['result']['updateViolationsDate'],
+                  ).toJson(),
+                  'plateChar': RowOfData(
+                    title: 'پلاک',
+                    svg: '$url/svg/directions_car.svg',
+                    description: json['result']['plateChar'],
+                  ).toJson(),
+                  'inquirePrice': RowOfData(
+                    title: 'جمع کل خلافی',
+                    svg: '$url/svg/payments.svg',
+                    description: json['result']['inquirePrice'],
+                  ).toJson(),
+                }
               : {},
           'violationsAggregate': invoice.serviceId == '5'
-              ? ViolationsAggregateMapper().map(
-              NajiVehiclesViolationsAggregateModel.fromJson(json))
+              ? ViolationsAggregateMapper()
+                  .map(NajiVehiclesViolationsAggregateModel.fromJson(json))
               : {},
           'vehiclesDocumentsStatus': invoice.serviceId == '6'
               ? VehicleDocumentStatusMapper()
-              .map(NajiVehiclesDocumentsStatusModel.fromJson(json))
+                  .map(NajiVehiclesDocumentsStatusModel.fromJson(json))
               : {},
         }).getJson(),
         headers: {"Content-Type": "application/json"});
@@ -812,33 +844,39 @@ Future<Response> serviceHistory(Request request) async {
   final invoiceList = await InvoiceRepository.instance?.getAllForUser(guid);
   if (invoiceList?.isEmpty ?? true) {
     return Response.ok(
-        NajiResponse(resultCode: 0, failures: [], data: {[]})
-            .getJson(),
+        NajiResponse(resultCode: 0, failures: [], data: {[]}).getJson(),
         headers: {"Content-Type": "application/json"});
   }
 
   return Response.ok(
       NajiResponse(
-          resultCode: 0, failures: [], data: invoiceList?.map((invoice) {
-        String timePart = invoice.localDate?.split(' ')[1] ?? '';
-        final jalaliDate = gregorianToJalali(
-          int.parse(invoice.localDate?.substring(0, 4) ?? '0'),
-          int.parse(invoice.localDate?.substring(5, 7) ?? '0'),
-          int.parse(invoice.localDate?.substring(8, 10) ?? '0'),
-        ).join('/');
-        print(invoice.localDate?.substring(0, 4));
-        print(invoice.localDate?.substring(5, 7));
-        print(invoice.localDate?.substring(8, 10));
-        print(jalaliDate);
-        return {
-          'localInvoiceId': invoice.localInvoiceId ?? '',
-          'serviceName': invoice.serviceName ?? '',
-          'rrn': invoice.rrn ?? '',
-          'date': jalaliDate,
-          'time': timePart.substring(0,8),
-          'refId':invoice.refId,
-          'hasNajiResult': (invoice.najiResult?.isNotEmpty ?? false),
-        };
-      }).toList()).getJson(),
+              resultCode: 0,
+              failures: [],
+              data: invoiceList?.map((invoice) {
+                String timePart = invoice.localDate?.split(' ')[1] ?? '';
+                final jalaliDate = gregorianToJalali(
+                  int.parse(invoice.localDate?.substring(0, 4) ?? '0'),
+                  int.parse(invoice.localDate?.substring(5, 7) ?? '0'),
+                  int.parse(invoice.localDate?.substring(8, 10) ?? '0'),
+                ).join('/');
+                print(invoice.localDate?.substring(0, 4));
+                print(invoice.localDate?.substring(5, 7));
+                print(invoice.localDate?.substring(8, 10));
+                print(jalaliDate);
+                return {
+                  'localInvoiceId': invoice.localInvoiceId ?? '',
+                  'serviceName': invoice.serviceName ?? '',
+                  'rrn': invoice.rrn ?? '',
+                  'date': jalaliDate,
+                  'time': timePart.substring(0, 8),
+                  'refId': invoice.refId,
+                  'hasNajiResult': (invoice.najiResult?.isNotEmpty ?? false),
+                  'mobileNumber': invoice.mobileNumber,
+                  'nationalCode': invoice.nationalCode,
+                  'plateNumber': invoice.plateNumber,
+                  'licenseNumber': invoice.licenseNumber,
+                };
+              }).toList())
+          .getJson(),
       headers: {"Content-Type": "application/json"});
 }
