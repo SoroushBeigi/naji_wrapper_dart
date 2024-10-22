@@ -1,5 +1,5 @@
 class Payment {
-  final int amount;
+  final String? amount;
   final String? resultPaymentDateTime;
   final String? message;
   final String? bankReferenceNo;

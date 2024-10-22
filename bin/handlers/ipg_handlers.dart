@@ -32,7 +32,21 @@ const failureHtml = '''
     </html>
     ''';
 
-String generatePaymentHtml(PaymentResult paymentResult) {
+String generatePaymentHtml(InvoiceData invoice) {
+  final now = DateTime.now();
+
+  final paymentResult = PaymentResult(
+      status: invoice.verify_result == 1 ? 'Successful' : 'Canceled',
+      statusTitle: invoice.verify_result==1? 'عملیات موفق' : invoice.payment_result==1?'خطای سرویس دهنده':'عملیات ناموفق',
+      payment: Payment(
+        amount: invoice.amount ?? '',
+        resultPaymentDateTime:
+        invoice.resultpay_datetime==null?gregorianToJalali(now.year, now.month, now.day).join('/') : invoice.resultpay_datetime.toString(),
+        message:
+        invoice.verify_result==1? 'پرداخت با موفقیت انجام شد' : invoice.payment_result==1?'خطایی در سرویس ناجی رخ داده':'پرداخت ناموفق',
+        callbackUrl:
+        'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
+      ));
   return '''
   <html>
   <head>
@@ -48,7 +62,7 @@ String generatePaymentHtml(PaymentResult paymentResult) {
               <div class="body-payment">
                   <div class="field-wrapper">
                       <label>مبلغ تراکنش</label>
-                      <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'}">
+                      <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'} rtl-text">
                           <span>${paymentResult.payment?.amount.toString()}</span> <span>ریال</span>
                       </div>
                   </div>
@@ -410,18 +424,7 @@ Future<Response> callback(Request request) async {
         // </html>
         // ''';
         return Response.ok(
-            generatePaymentHtml(PaymentResult(
-                status: invoice.verify_result == 1 ? 'Successful' : 'Canceled',
-                statusTitle: 'عملیات ناموفق سرویس دهنده',
-                payment: Payment(
-                  amount: int.parse(invoice.amount ?? '0'),
-                  resultPaymentDateTime:
-                      invoice.resultpay_datetime.toString() ?? '',
-                  message:
-                      'سرویس موردنظر انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.',
-                  callbackUrl:
-                      'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
-                ))),
+            generatePaymentHtml(invoice),
             headers: {
               HttpHeaders.contentTypeHeader: 'text/html',
             });
@@ -489,22 +492,7 @@ Future<Response> callback(Request request) async {
         // ''';
         //TODO check and test!!
         return Response.ok(
-            generatePaymentHtml(PaymentResult(
-                status:
-                    invoice.payment_result == 1 ? 'Successful' : 'Cancelled',
-                statusTitle: invoice.payment_result == 1
-                    ? 'تراکنش موفق'
-                    : 'تراکنش ناموفق',
-                payment: Payment(
-                  amount: int.parse(invoice.amount ?? '0'),
-                  resultPaymentDateTime:
-                      invoice.payGateTranDate.toString() ?? '',
-                  message: invoice.payment_result == 1
-                      ? 'پرداخت موفق'
-                      : 'پرداخت ناموفق',
-                  callbackUrl:
-                      'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
-                ))),
+          generatePaymentHtml(invoice),
             headers: {
               HttpHeaders.contentTypeHeader: 'text/html',
             });
@@ -521,22 +509,7 @@ Future<Response> callback(Request request) async {
             headers: {"Content-Type": "application/json"});
       }
       return Response.ok(
-          generatePaymentHtml(PaymentResult(
-              status:
-              invoice.payment_result == 1 ? 'Successful' : 'Cancelled',
-              statusTitle: invoice.payment_result == 1
-                  ? 'تراکنش موفق'
-                  : 'تراکنش ناموفق',
-              payment: Payment(
-                amount: int.parse(invoice.amount ?? '0'),
-                resultPaymentDateTime:
-                invoice.payGateTranDate.toString() ?? '',
-                message: invoice.payment_result == 1
-                    ? 'پرداخت موفق'
-                    : 'پرداخت ناموفق',
-                callbackUrl:
-                'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
-              ))),
+          generatePaymentHtml(invoice),
           headers: {
             HttpHeaders.contentTypeHeader: 'text/html',
           });
@@ -554,22 +527,7 @@ Future<Response> callback(Request request) async {
           headers: {"Content-Type": "application/json"});
     }
     return Response.ok(
-        generatePaymentHtml(PaymentResult(
-            status:
-            invoice.payment_result == 1 ? 'Successful' : 'Cancelled',
-            statusTitle: invoice.payment_result == 1
-                ? 'تراکنش موفق'
-                : 'تراکنش ناموفق',
-            payment: Payment(
-              amount: int.parse(invoice.amount ?? '0'),
-              resultPaymentDateTime:
-              invoice.payGateTranDate.toString() ?? '',
-              message: invoice.payment_result == 1
-                  ? 'پرداخت موفق'
-                  : 'پرداخت ناموفق',
-              callbackUrl:
-              'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
-            ))),
+        generatePaymentHtml(invoice),
         headers: {
           HttpHeaders.contentTypeHeader: 'text/html',
         });
@@ -844,7 +802,7 @@ Future<Response> serviceHistory(Request request) async {
   final invoiceList = await InvoiceRepository.instance?.getAllForUser(guid);
   if (invoiceList?.isEmpty ?? true) {
     return Response.ok(
-        NajiResponse(resultCode: 0, failures: [], data: {[]}).getJson(),
+        NajiResponse(resultCode: 0, failures: [], data: []).getJson(),
         headers: {"Content-Type": "application/json"});
   }
 
@@ -859,10 +817,6 @@ Future<Response> serviceHistory(Request request) async {
                   int.parse(invoice.localDate?.substring(5, 7) ?? '0'),
                   int.parse(invoice.localDate?.substring(8, 10) ?? '0'),
                 ).join('/');
-                print(invoice.localDate?.substring(0, 4));
-                print(invoice.localDate?.substring(5, 7));
-                print(invoice.localDate?.substring(8, 10));
-                print(jalaliDate);
                 return {
                   'localInvoiceId': invoice.localInvoiceId ?? '',
                   'serviceName': invoice.serviceName ?? '',
@@ -875,6 +829,7 @@ Future<Response> serviceHistory(Request request) async {
                   'nationalCode': invoice.nationalCode,
                   'plateNumber': invoice.plateNumber,
                   'licenseNumber': invoice.licenseNumber,
+                  'serviceId':invoice.serviceId,
                 };
               }).toList())
           .getJson(),

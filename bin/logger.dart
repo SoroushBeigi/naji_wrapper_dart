@@ -21,9 +21,9 @@ void setupLogging() {
       'message': record.message,
       'time': record.time.toIso8601String(),
     };
-    logSink.write('${jsonEncode(logEntry)}\n');
+    logSink.write('$logEntry\n');
     if(!Constants.isProduction){
-      print(jsonEncode(logEntry));
+      print(logEntry);
     }
   });
 }
@@ -41,7 +41,8 @@ Middleware logRequestsAndResponses() {
         'body': requestBody,
         'time': DateTime.now().toIso8601String(),
       };
-      logger.info(jsonEncode(requestLog));
+
+      logger.info(requestLog); // Log the request map directly
 
       final newRequest = request.change(body: requestBody);
 
@@ -56,7 +57,8 @@ Middleware logRequestsAndResponses() {
         'body': responseBody,
         'time': DateTime.now().toIso8601String(),
       };
-      logger.info(jsonEncode(responseLog));
+
+      logger.info(responseLog); // Log the response map directly
 
       return response.change(body: responseBody);
     };
