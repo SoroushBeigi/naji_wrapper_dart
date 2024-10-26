@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
@@ -29,6 +30,8 @@ void main() async {
   ServiceRepository(connection).init();
   InvoiceRepository(connection).init();
 
+
+
   final staticHandler = createStaticHandler('../assets', defaultDocument: null);
 
   final handler = Pipeline()
@@ -37,7 +40,7 @@ void main() async {
 
   final port = int.parse(Constants.port);
   final server = await serve(handler, ip, port);
-  logger.info('Server listening on ip $ip port ${server.port}');
+  // logger.info("Server listening on ip ${ip.host} port ${server.port}");
 }
 
 

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:logging/logging.dart';
 import 'package:shelf/shelf.dart';
 import 'constants.dart';
@@ -8,21 +7,35 @@ import 'constants.dart';
 final Logger logger = Logger('ShelfLogger');
 
 void setupLogging() {
+  final logstashLogger = LogstashLogger('localhost', 5044);
   hierarchicalLoggingEnabled = true;
   logger.level = Level.INFO;
 
-  final logFile = File('../../logs/logfile.log');
-  logFile.createSync(recursive: true);
-  IOSink logSink = logFile.openWrite(mode: FileMode.append);
-
   logger.onRecord.listen((record) {
+    final decodedMessage = jsonDecode(record.message);
     final logEntry = {
       'level': record.level.name,
-      'message': record.message,
       'time': record.time.toIso8601String(),
+      'type':decodedMessage?['type'] ?? '',
+
+    'headers':decodedMessage['headers'],
+    'body':decodedMessage['body'],
     };
-    logSink.write('$logEntry\n');
-    if(!Constants.isProduction){
+    if(decodedMessage?['type']=='Request'){
+      logEntry.addAll({
+        'url':decodedMessage['url'],
+        'method':decodedMessage['method'],
+      });
+    }
+    if(decodedMessage?['type']=='Response'){
+      logEntry.addAll({
+        'status':decodedMessage['status'],
+      });
+
+    }
+    logstashLogger.log(logEntry);
+
+    if (!Constants.isProduction) {
       print(logEntry);
     }
   });
@@ -34,7 +47,7 @@ Middleware logRequestsAndResponses() {
       final requestBody = await request.readAsString();
 
       final requestLog = {
-        'type': 'request',
+        'type': 'Request',
         'method': request.method,
         'url': request.requestedUri.toString(),
         'headers': request.headers,
@@ -42,25 +55,64 @@ Middleware logRequestsAndResponses() {
         'time': DateTime.now().toIso8601String(),
       };
 
-      logger.info(requestLog); // Log the request map directly
+      logger.info(jsonEncode(requestLog));
 
       final newRequest = request.change(body: requestBody);
-
       final response = await innerHandler(newRequest);
 
       final responseBody = await response.readAsString();
 
+      // Structured log for the response
       final responseLog = {
-        'type': 'response',
+        'type': 'Response',
         'status': response.statusCode,
         'headers': response.headers,
         'body': responseBody,
         'time': DateTime.now().toIso8601String(),
       };
 
-      logger.info(responseLog); // Log the response map directly
+      logger.info(jsonEncode(responseLog));
 
       return response.change(body: responseBody);
     };
   };
+}
+
+class LogstashLogger {
+  static final LogstashLogger _instance = LogstashLogger._internal();
+  late final String host;
+  late final int port;
+  Socket? _socket;
+
+  LogstashLogger._internal();
+
+  factory LogstashLogger(String host, int port) {
+    _instance.host = host;
+    _instance.port = port;
+    _instance._connect();
+    return _instance;
+  }
+
+  void _connect() async {
+    try {
+      _socket = await Socket.connect(host, port);
+    } catch (e) {
+      print('Error connecting to Logstash: $e');
+    }
+  }
+
+  // This method now accepts structured data, making sure each key-value pair is sent correctly
+  void log(Map<String, dynamic> logEntry) {
+    if (_socket != null) {
+      // Ensure it’s formatted correctly for Logstash
+      final logMessage = jsonEncode(logEntry);
+      _socket!.write('$logMessage\n'); // Send it to Logstash
+    } else {
+      print('Logstash connection not established. Log message: $logEntry');
+    }
+  }
+
+  void close() {
+    _socket?.close();
+  }
 }

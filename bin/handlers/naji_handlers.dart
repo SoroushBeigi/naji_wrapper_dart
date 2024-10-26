@@ -26,14 +26,25 @@ Future<Response> validateUser(Request request) async {
         'nationalCode': nationalCode,
         'mobileNo': mobileNumber,
       });
+
       if (response.data['resultStatus'] == 0) {
+        //0, OK
         final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
           'message': response.data['resultStatusMessage'],
           "isRegistered": true,
         });
         return Response.ok(najiResponse.getJson(),
             headers: {"Content-Type": "application/json"});
+      } else if (response.data['resultStatus'] == 2) {
+        //2: not registered
+        final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
+          'message': response.data['resultStatusMessage'],
+          "isRegistered": false,
+        });
+        return Response.ok(najiResponse.getJson(),
+            headers: {"Content-Type": "application/json"});
       } else {
+        //1, server down, etc
         final najiResponse = NajiResponse(
             resultCode: 1,
             failures: [response.data['resultStatusMessage']],

@@ -14,27 +14,10 @@ import '../utils/date_converter.dart';
 import '../utils/result_mapper.dart';
 import '../models/payment_result.dart';
 
-const failureHtml = '''
-      <!DOCTYPE html>
-    <html>
-      <head>
-        <title>نتیجه تراکنش</title>
-        <style>
-          body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
-          .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
-          .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-        </style>
-      </head>
-      <body>
-          <h1>عملیات ناموفق</h1>
-          <p>تراکنش انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.</p>
-      </body>
-    </html>
-    ''';
-
 String generatePaymentHtml(InvoiceData invoice) {
   final now = DateTime.now();
-
+  print('verify result');
+  print(invoice.verify_result);
   final paymentResult = PaymentResult(
       status: invoice.verify_result == 1 ? 'Successful' : 'Canceled',
       statusTitle: invoice.verify_result==1? 'عملیات موفق' : invoice.payment_result==1?'خطای سرویس دهنده':'عملیات ناموفق',
@@ -45,7 +28,7 @@ String generatePaymentHtml(InvoiceData invoice) {
         message:
         invoice.verify_result==1? 'پرداخت با موفقیت انجام شد' : invoice.payment_result==1?'خطایی در سرویس ناجی رخ داده':'پرداخت ناموفق',
         callbackUrl:
-        'eks://emdad.behpardaz.net/payment-result?refId=${invoice.refId}',
+        'eks://emdad.behpardaz.net/payment-result?refId=${invoice.verify_result==1?invoice.refId:'-1'}',
       ));
   return '''
   <html>
@@ -62,7 +45,7 @@ String generatePaymentHtml(InvoiceData invoice) {
               <div class="body-payment">
                   <div class="field-wrapper">
                       <label>مبلغ تراکنش</label>
-                      <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'} rtl-text">
+                      <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'} rtl-text"">
                           <span>${paymentResult.payment?.amount.toString()}</span> <span>ریال</span>
                       </div>
                   </div>
@@ -71,7 +54,7 @@ String generatePaymentHtml(InvoiceData invoice) {
                       <span>${paymentResult.payment?.resultPaymentDateTime.toString()}</span>
                   </div>
                   ${paymentResult.payment?.message != null ? '''
-                  <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'}">
+                  <div class="${paymentResult.status == 'Canceled' ? 'canceled-text' : 'successful-text'} rtl-text">
                       <span>${paymentResult.payment?.message}</span>
                   </div>
                   ''' : ''}
@@ -133,7 +116,6 @@ String generatePaymentHtml(InvoiceData invoice) {
                 text-decoration: none;
                 border-radius: 1rem;
                 padding: 1rem;
-                width: 100%;
                 margin: auto;
                 font-size: 1rem;
                 text-align: center;
@@ -163,6 +145,11 @@ String generatePaymentHtml(InvoiceData invoice) {
                 font-size: 1rem;
                 text-align: center;
             }
+             .rtl-text {
+                direction: rtl; /* Set text direction to right-to-left */
+                text-align: right; /* Align text to the right */
+            }
+
         </style>
       </div>
   </body>
@@ -358,15 +345,18 @@ Future<Response> callback(Request request) async {
     print('Updated DB ');
 
     if (tranResult.statusCode == 472) {
-      print('tranresult 472 ');
-      return Response.ok(failureHtml, headers: {
+
+      final resultInvoice =  await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
+      //TODO: do sth about null !!!!!!
+      //TODO: do sth about null !!!!!!
+      //TODO: do sth about null !!!!!!
+      return Response.ok(generatePaymentHtml(resultInvoice!), headers: {
         HttpHeaders.contentTypeHeader: 'text/html',
       });
     }
 
     if (tranResult.statusCode == 200) {
       print('tranresult 200 ');
-      //success
       final invoice =
           await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
 
@@ -423,8 +413,9 @@ Future<Response> callback(Request request) async {
         //   </body>
         // </html>
         // ''';
+        final resultInvoice =  await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1') ?? invoice;
         return Response.ok(
-            generatePaymentHtml(invoice),
+            generatePaymentHtml(resultInvoice),
             headers: {
               HttpHeaders.contentTypeHeader: 'text/html',
             });
@@ -490,9 +481,9 @@ Future<Response> callback(Request request) async {
         //   </body>
         // </html>
         // ''';
-        //TODO check and test!!
+        final resultInvoice =  await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1') ?? invoice;
         return Response.ok(
-          generatePaymentHtml(invoice),
+          generatePaymentHtml(resultInvoice),
             headers: {
               HttpHeaders.contentTypeHeader: 'text/html',
             });
@@ -508,8 +499,9 @@ Future<Response> callback(Request request) async {
                 data: {}).getJson(),
             headers: {"Content-Type": "application/json"});
       }
+      final resultInvoice =  await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1') ?? invoice;
       return Response.ok(
-          generatePaymentHtml(invoice),
+          generatePaymentHtml(resultInvoice),
           headers: {
             HttpHeaders.contentTypeHeader: 'text/html',
           });
@@ -526,8 +518,9 @@ Future<Response> callback(Request request) async {
               data: {}).getJson(),
           headers: {"Content-Type": "application/json"});
     }
+    final resultInvoice =  await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1') ?? invoice;
     return Response.ok(
-        generatePaymentHtml(invoice),
+        generatePaymentHtml(resultInvoice),
         headers: {
           HttpHeaders.contentTypeHeader: 'text/html',
         });
@@ -617,6 +610,14 @@ Future<Response> serviceResult(Request request) async {
   }
   if (!Constants.noPayment) {
     final decodedNajiResult = jsonDecode(invoice.najiResult ?? '');
+    if(decodedNajiResult==null){
+      return Response.ok(
+          NajiResponse(
+              resultCode: 1,
+              failures: ['نتیجه سرویس ناجی یافت نشد'],
+              data: {}).getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
     if (decodedNajiResult['resultStatus'].toString() != '0') {
       return Response.ok(
           NajiResponse(
@@ -741,7 +742,7 @@ Future<Response> serviceResult(Request request) async {
           'vehiclesViolations': invoice.serviceId == '4'
               ? {
                   'violations': VehicleViolationsMapper().mapList(
-                      (jsonDecode(json['result']['violations'])
+                      (jsonDecode(json['result'])['violations']
                               as List<dynamic>)
                           .map(
                             (e) => ViolationModel.fromJson(e),
@@ -750,17 +751,17 @@ Future<Response> serviceResult(Request request) async {
                   'updateViolationsDate': RowOfData(
                     title: 'تاریخ استعلام خلافی',
                     svg: '$url/svg/calendar_month.svg',
-                    description: json['result']['updateViolationsDate'],
+                    description: jsonDecode(json['result'])['updateViolationsDate'],
                   ).toJson(),
                   'plateChar': RowOfData(
                     title: 'پلاک',
                     svg: '$url/svg/directions_car.svg',
-                    description: json['result']['plateChar'],
+                    description: jsonDecode(json['result'])['plateChar'],
                   ).toJson(),
                   'inquirePrice': RowOfData(
                     title: 'جمع کل خلافی',
                     svg: '$url/svg/payments.svg',
-                    description: json['result']['inquirePrice'],
+                    description: jsonDecode(json['result'])['inquirePrice'],
                   ).toJson(),
                 }
               : {},
@@ -830,8 +831,9 @@ Future<Response> serviceHistory(Request request) async {
                   'plateNumber': invoice.plateNumber,
                   'licenseNumber': invoice.licenseNumber,
                   'serviceId':invoice.serviceId,
+                  'najiError': (invoice.verify_result!=1 && invoice.payment_result==1) ? jsonDecode(invoice.najiResult??'')['resultStatusMessage']:null,
                 };
-              }).toList())
+              }).toList().reversed.toList())
           .getJson(),
       headers: {"Content-Type": "application/json"});
 }

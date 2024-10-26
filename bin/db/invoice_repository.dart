@@ -69,7 +69,7 @@ class InvoiceRepository
   Future<List<InvoiceData>?> getAllForUser(String guid) async {
     final result = await connection.execute(
         Sql.named(
-            "SELECT order_desc, tag3, tracking_code, order_datetime, extra_data, request_referenceid, paymenter_mobile, paymenter_natcode, tag2, tag1, order_type FROM invoices WHERE paymenter_email = @guid"),
+            "SELECT order_desc, tag3, tracking_code, order_datetime, extra_data, request_referenceid, paymenter_mobile, paymenter_natcode, tag2, tag1, order_type,verify_result, payment_result FROM invoices WHERE paymenter_email = @guid"),
         parameters: {'guid': guid});
     if (result.isEmpty) {
       return null;
@@ -88,6 +88,8 @@ class InvoiceRepository
             plateNumber: element[8]?.toString(),
             licenseNumber: element[9]?.toString(),
             serviceId: element[10]?.toString(),
+            verify_result: int.tryParse(element[11].toString()),
+            payment_result: int.tryParse(element[12].toString()),
           ),
         )
         .toList();
@@ -144,10 +146,12 @@ class InvoiceRepository
       amount: result[0][10].toString(),
       refId: result[0][11].toString(),
       payment_result: int.tryParse(result[0][13].toString()),
+
       localInvoiceId: result[0][15].toString(),
       payGateTranID: result[0][17].toString(),
       rrn: result[0][18].toString(),
       payGateTranDate: result[0][25].toString(),
+      verify_result: int.tryParse(result[0][34].toString()),
       licenseNumber: result[0][48].toString(),
       plateNumber: result[0][49].toString(),
       serviceName: result[0][50].toString(),
