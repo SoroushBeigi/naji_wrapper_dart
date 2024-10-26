@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:shelf/shelf.dart';
 import '../naji_response.dart';
 import '../clients/ipg_client.dart';
+import '../clients/naji_client.dart';
 import '../db/service_repository.dart';
 import '../db/invoice_repository.dart';
 import '../models/invoice_model.dart';
@@ -177,6 +178,9 @@ Future<Response> payment(Request request) async {
   final String? serviceId = body['serviceId'];
   final String? nationalCode = body['nationalCode'];
   final String? mobileNumber = body['mobileNumber'];
+  final String? inquiryCode = body['inquiryCode'];
+  final String? otp = body['otp'];
+  final String? ownerNationalCode = body['ownerNationalCode'];
 
   if (serviceId == null) {
     final najiResponse = NajiResponse(
@@ -271,6 +275,9 @@ Future<Response> payment(Request request) async {
     requestpay_msg: message,
     requestpay_result: status == 200 ? 1 : 0,
     callbackUrl: callBackUrl,
+    ownerNationalCode: ownerNationalCode,
+    otp: otp,
+    inquiryCode: inquiryCode,
   ));
   final najiResponse = NajiResponse(resultCode: 0, failures: [], data: {
     'refId': refId,
@@ -286,34 +293,34 @@ Future<Response> payment(Request request) async {
   //     headers: {"Content-Type": "application/json"});
 }
 
-Future<Response> paymentGateway(Request request) async {
-  final refId = request.url.queryParameters['refId'];
-  final mobileNumber = request.url.queryParameters['mobileNumber'];
-
-  if (refId == null) {
-    return Response.notFound('یافت نشد RefId');
-  }
-//TODO: TEST and add mobile number
-  final htmlContent = '''
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>انتقال به پرداخت...</title>
-      </head>
-      <body onload="document.forms['paymentForm'].submit()">
-        <p>درحال انتقال به درگاه پرداخت...</p>
-        <form id="paymentForm" method="POST" action="https://asan.shaparak.ir">
-          <input type="hidden" name="RefId" value="$refId" />
-          <input type="hidden" name="mobileap" value="$mobileNumber" />
-        </form>
-      </body>
-    </html>
-    ''';
-
-  return Response.ok(htmlContent, headers: {
-    HttpHeaders.contentTypeHeader: 'text/html',
-  });
-}
+// Future<Response> paymentGateway(Request request) async {
+//   final refId = request.url.queryParameters['refId'];
+//   final mobileNumber = request.url.queryParameters['mobileNumber'];
+//
+//   if (refId == null) {
+//     return Response.notFound('یافت نشد RefId');
+//   }
+// //TODO: TEST and add mobile number
+//   final htmlContent = '''
+//     <!DOCTYPE html>
+//     <html>
+//       <head>
+//         <title>انتقال به پرداخت...</title>
+//       </head>
+//       <body onload="document.forms['paymentForm'].submit()">
+//         <p>درحال انتقال به درگاه پرداخت...</p>
+//         <form id="paymentForm" method="POST" action="https://asan.shaparak.ir">
+//           <input type="hidden" name="RefId" value="$refId" />
+//           <input type="hidden" name="mobileap" value="$mobileNumber" />
+//         </form>
+//       </body>
+//     </html>
+//     ''';
+//
+//   return Response.ok(htmlContent, headers: {
+//     HttpHeaders.contentTypeHeader: 'text/html',
+//   });
+// }
 
 Future<Response> callback(Request request) async {
   final localInvoiceId = request.url.queryParameters['localInvoiceId'];
@@ -394,25 +401,6 @@ Future<Response> callback(Request request) async {
               reverse_result: reverseResult.statusCode == 200 ? 1 : 0,
               reverse_msg: reverseResult.statusMessage,
             ));
-        //     final najiFailureHtml = '''
-        //   <!DOCTYPE html>
-        // <html>
-        //   <head>
-        //     <title>نتیجه تراکنش</title>
-        //     <style>
-        //       body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
-        //       .container { display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        //       .button { margin-top: 50px; padding: 10px 20px; font-size: 18px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
-        //     </style>
-        //   </head>
-        //   <body>
-        //       <h1>عملیات ناموفق سرویس دهنده</h1>
-        //       <p>سرویس موردنظر انجام نشد. درصورت پرداخت، مبلغ کسر شده حداکثر تا 72 ساعت به حساب شما باز می گردد.</p>
-        //        <a href="eks://emdad.behpardaz.net/payment-result?refId=${invoice
-        //         .refId}" class="button">بازگشت به برنامه</a>
-        //   </body>
-        // </html>
-        // ''';
         final resultInvoice =  await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1') ?? invoice;
         return Response.ok(
             generatePaymentHtml(resultInvoice),
@@ -568,6 +556,13 @@ Future<int> doNajiRequest(InvoiceData invoice) async {
         mobileNumber: invoice.mobileNumber!,
         nationalCode: invoice.nationalCode!,
         plateNumber: invoice.plateNumber!,
+      );
+
+    case '7':
+      result = await vehiclesConditions(
+        inquiryCode: invoice.inquiryCode!,
+        nationalCode: invoice.ownerNationalCode!,
+        otp: invoice.otp!,
       );
     default:
       result = null;
@@ -837,3 +832,4 @@ Future<Response> serviceHistory(Request request) async {
           .getJson(),
       headers: {"Content-Type": "application/json"});
 }
+

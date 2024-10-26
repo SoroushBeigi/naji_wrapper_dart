@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:postgres/postgres.dart';
 
 import '../models/invoice_model.dart';
@@ -26,16 +28,9 @@ class InvoiceRepository
 
   @override
   Future<void> write(invoiceData) async {
-    // String keys = '';
-    // String values = '';
-    // invoiceData.getFields().forEach((key, value) {
-    //   keys += "$key, ";
-    //   values += "'$value', ";
-    // });
-    // String query = 'INSERT INTO invoices (';
     final result = await connection.execute(
       Sql.named(
-          'INSERT INTO invoices (redirect_url, request_referenceid, order_type, tag2, tag1, paymenter_email, order_desc, order_datetime , paymenter_mobile, paymenter_natcode, paymenter_name, requestpay_datetime, requestpay_req_json, requestpay_res_json, requestpay_status, requestpay_msg, requestpay_result) VALUES (@callbackUrl, @refId, @serviceId, @plateNumber, @licenseNumber, @userId, @localInvoiceId, @localDate, @mobileNumber, @nationalCode, @name, @requestpay_datetime, @requestpay_req_json, @requestpay_res_json, @requestpay_status, @requestpay_msg, @requestpay_result)'),
+          'INSERT INTO invoices (redirect_url, request_referenceid, order_type, tag2, tag1, paymenter_email, order_desc, order_datetime , paymenter_mobile, paymenter_natcode, paymenter_name, requestpay_datetime, requestpay_req_json, requestpay_res_json, requestpay_status, requestpay_msg, requestpay_result, post_proc_trace) VALUES (@callbackUrl, @refId, @serviceId, @plateNumber, @licenseNumber, @userId, @localInvoiceId, @localDate, @mobileNumber, @nationalCode, @name, @requestpay_datetime, @requestpay_req_json, @requestpay_res_json, @requestpay_status, @requestpay_msg, @requestpay_result, @post_proc_trace)'),
       parameters: {
         'callbackUrl': invoiceData.callbackUrl,
         'refId': invoiceData.refId,
@@ -56,6 +51,11 @@ class InvoiceRepository
         'requestpay_status': invoiceData.requestpay_status,
         'requestpay_msg': invoiceData.requestpay_msg,
         'requestpay_result': invoiceData.requestpay_result,
+        'post_proc_trace': jsonEncode({
+          'nationalCode': invoiceData.ownerNationalCode,
+          'inquiryCode': invoiceData.inquiryCode,
+          'otp': invoiceData.otp,
+        }),
       },
     );
   }
@@ -64,6 +64,15 @@ class InvoiceRepository
   Future<List<InvoiceData>> getAll() {
     // TODO: implement getAll
     throw UnimplementedError();
+  }
+
+  Future<String> getLocalInvoiceId(String inquiryCode) async {
+    final result = await connection.execute(
+        Sql.named("SELECT order_desc WHERE post_proc_trace = @inquiryCode"),
+        parameters: {
+          'inquiryCode': inquiryCode,
+        });
+    return result[0][0].toString();
   }
 
   Future<List<InvoiceData>?> getAllForUser(String guid) async {
@@ -79,7 +88,7 @@ class InvoiceRepository
           (element) => InvoiceData(
             localInvoiceId: element[0].toString(),
             serviceName: element[1].toString(),
-            rrn: element[2]?.toString() ,
+            rrn: element[2]?.toString(),
             localDate: element[3].toString(),
             najiResult: element[4].toString(),
             refId: element[5].toString(),
@@ -146,7 +155,6 @@ class InvoiceRepository
       amount: result[0][10].toString(),
       refId: result[0][11].toString(),
       payment_result: int.tryParse(result[0][13].toString()),
-
       localInvoiceId: result[0][15].toString(),
       payGateTranID: result[0][17].toString(),
       rrn: result[0][18].toString(),
@@ -156,6 +164,9 @@ class InvoiceRepository
       plateNumber: result[0][49].toString(),
       serviceName: result[0][50].toString(),
       najiResult: result[0][57].toString(),
+      inquiryCode: (jsonEncode(result[0][56].toString()) as Map<String,dynamic>)['inquiryCode'],
+      otp: (jsonEncode(result[0][56].toString()) as Map<String,dynamic>)['otp'],
+      ownerNationalCode: (jsonEncode(result[0][56].toString()) as Map<String,dynamic>)['nationalCode'],
     );
   }
 
@@ -171,7 +182,7 @@ class InvoiceRepository
           "UPDATE invoices SET verify_datetime=@verify_datetime, verify_req_json=@verify_req_json, verify_res_json=@verify_res_json, verify_status=@verify_status, verify_result=@verify_result, verify_msg=@verify_msg WHERE request_referenceid=@refId"),
       parameters: {
         'verify_datetime':
-            dateTimeToTimestamp(invoice.verify_datetime ??DateTime(2000)),
+            dateTimeToTimestamp(invoice.verify_datetime ?? DateTime(2000)),
         'verify_req_json': invoice.verify_req_json,
         'verify_res_json': invoice.verify_res_json,
         'verify_status': invoice.verify_status,
@@ -188,7 +199,7 @@ class InvoiceRepository
           "UPDATE invoices SET settle_datetime=@settle_datetime, settle_req_json=@settle_req_json, settle_res_json=@settle_res_json, settle_status=@settle_status, settle_result=@settle_result, settle_msg=@settle_msg WHERE request_referenceid=@refId"),
       parameters: {
         'settle_datetime':
-            dateTimeToTimestamp(invoice.settle_datetime ??DateTime(2000)),
+            dateTimeToTimestamp(invoice.settle_datetime ?? DateTime(2000)),
         'settle_req_json': invoice.settle_req_json,
         'settle_res_json': invoice.settle_res_json,
         'settle_status': invoice.settle_status,
@@ -205,7 +216,7 @@ class InvoiceRepository
           "UPDATE invoices SET reverse_datetime=@reverse_datetime, reverse_req_json=@reverse_req_json, reverse_res_json=@reverse_res_json, reverse_status=@reverse_status, reverse_result=@reverse_result, reverse_msg=@reverse_msg WHERE request_referenceid=@refId"),
       parameters: {
         'reverse_datetime':
-        dateTimeToTimestamp(invoice.reverse_datetime ?? DateTime(2000)),
+            dateTimeToTimestamp(invoice.reverse_datetime ?? DateTime(2000)),
         'reverse_req_json': invoice.reverse_req_json,
         'reverse_res_json': invoice.reverse_res_json,
         'reverse_status': invoice.reverse_status,
@@ -215,7 +226,6 @@ class InvoiceRepository
       },
     );
   }
-
 
   @override
   Future<void> update(String refId, InvoiceData invoice) async {
@@ -241,7 +251,7 @@ class InvoiceRepository
           'resultpay_msg': invoice.resultpay_msg,
           'resultpay_result': invoice.resultpay_result,
           'resultpay_status': invoice.resultpay_status,
-          'payment_result':invoice.payment_result,
+          'payment_result': invoice.payment_result,
           'refId': refId
         },
       );

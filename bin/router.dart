@@ -28,11 +28,12 @@ class NajiRouter {
     // ..post('/vehiclesDocumentsStatus', vehiclesDocumentsStatus)
     ..get('/time', time)
     ..post('/payment', payment)
-    ..get('/paymentGateway', paymentGateway)
+    // ..get('/paymentGateway', paymentGateway)
     ..get('/callback', callback)
     ..post('/callback', callback)
     ..post('/serviceResult', serviceResult)
-    ..post('/serviceHistory',serviceHistory);
+    ..post('/serviceHistory',serviceHistory)
+    ..post('/vehiclesConditionsOtp', vehiclesConditionsOtp );
 
   get router => _router;
 

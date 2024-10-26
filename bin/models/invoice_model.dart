@@ -9,7 +9,13 @@ class InvoiceData {
       localInvoiceId,
       localDate,
       name;
-  final String? userId, callbackUrl;
+  final String? userId,
+      callbackUrl,
+      inquiryCode,
+      otp,
+      ownerNationalCode,
+      buyerNationalCode,
+      cardBarcode;
 
   //Populated by triggers, not needed for writing
   final String? nationalCode, mobileNumber, serviceName;
@@ -57,6 +63,11 @@ class InvoiceData {
       reverse_datetime;
 
   InvoiceData({
+    this.ownerNationalCode,
+    this.buyerNationalCode,
+    this.cardBarcode,
+    this.inquiryCode,
+    this.otp,
     this.reverse_req_json,
     this.reverse_res_json,
     this.reverse_msg,
@@ -157,6 +168,8 @@ class InvoiceData {
       "reverse_result": reverse_result,
       "reverse_msg": reverse_msg,
       "reverse_datetime": reverse_datetime,
+      "inquiryCode": inquiryCode,
+      "otp": otp,
     };
   }
 }

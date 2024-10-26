@@ -16,22 +16,20 @@ void setupLogging() {
     final logEntry = {
       'level': record.level.name,
       'time': record.time.toIso8601String(),
-      'type':decodedMessage?['type'] ?? '',
-
-    'headers':decodedMessage['headers'],
-    'body':decodedMessage['body'],
+      'type': decodedMessage?['type'] ?? '',
+      'headers': decodedMessage['headers'],
+      'body': decodedMessage['body'],
     };
-    if(decodedMessage?['type']=='Request'){
+    if (decodedMessage?['type'] == 'Request') {
       logEntry.addAll({
-        'url':decodedMessage['url'],
-        'method':decodedMessage['method'],
+        'url': decodedMessage['url'],
+        'method': decodedMessage['method'],
       });
     }
-    if(decodedMessage?['type']=='Response'){
+    if (decodedMessage?['type'] == 'Response') {
       logEntry.addAll({
-        'status':decodedMessage['status'],
+        'status': decodedMessage['status'],
       });
-
     }
     logstashLogger.log(logEntry);
 
@@ -62,7 +60,6 @@ Middleware logRequestsAndResponses() {
 
       final responseBody = await response.readAsString();
 
-      // Structured log for the response
       final responseLog = {
         'type': 'Response',
         'status': response.statusCode,
@@ -101,12 +98,10 @@ class LogstashLogger {
     }
   }
 
-  // This method now accepts structured data, making sure each key-value pair is sent correctly
   void log(Map<String, dynamic> logEntry) {
     if (_socket != null) {
-      // Ensure it’s formatted correctly for Logstash
       final logMessage = jsonEncode(logEntry);
-      _socket!.write('$logMessage\n'); // Send it to Logstash
+      _socket!.write('$logMessage\n');
     } else {
       print('Logstash connection not established. Log message: $logEntry');
     }

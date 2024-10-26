@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import '../naji_response.dart';
 import '../clients/naji_client.dart';
+import '../db/invoice_repository.dart';
 
 Future<Response> validateUser(Request request) async {
   final String? nationalCode;
@@ -289,6 +290,103 @@ Future<Map<String, dynamic>?> vehiclesDocumentsStatus(
     return response.data;
   }
   return null;
+}
+
+Future<Map<String, dynamic>?> vehiclesConditions({
+  required String nationalCode,
+  required String inquiryCode,
+  required String otp,
+}) async {
+  final response = await NajiNetworkModule.instance.dio
+      .post('/naji/vehiclesConditionsInquiry', data: {
+    'nationalCode': nationalCode,
+    'inquiryCode': inquiryCode,
+    'otp': otp,
+  });
+
+  if (response.statusCode == 200) {
+    return response.data;
+  }
+  return null;
+}
+
+Future<Response> vehiclesConditionsOtp(Request request) async {
+  final bodyString = await request.readAsString();
+  final Map<String, dynamic> body;
+  try {
+    body = jsonDecode(bodyString);
+  } catch (e) {
+    print(e);
+    return Response.ok(
+        NajiResponse(resultCode: 1, failures: ['خطای مقادیر ورودی'], data: {})
+            .getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  final String? cardBarcode = body['cardBarcode'];
+  final String? ownerNationalCode = body['ownerNationalCode'];
+  final String? buyerNationalCode = body['buyerNationalCode'];
+  if (cardBarcode == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            failures: ['بارکد کارت الزامی است'],
+            data: {}).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  if (ownerNationalCode == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            failures: ['کدملی مالک الزامی است'],
+            data: {}).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  if (buyerNationalCode == null) {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            failures: ['کدملی خریدار الزامی است'],
+            data: {}).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
+  final requestMap = {
+    'cardBarcode': cardBarcode,
+    'ownerNationalCode': ownerNationalCode,
+    'buyerNationalCode': buyerNationalCode,
+  };
+  final response = await NajiNetworkModule.instance.dio
+      .post('/naji/vehiclesConditionsOtp', data: requestMap);
+  // InvoiceRepository.instance?.updatePostProcData({
+  //   "localInvoiceId": DateTime.now().microsecondsSinceEpoch,
+  //   "post_proc_req_json": jsonEncode(requestMap),
+  //   "post_proc_res_json":jsonEncode(response.data),
+  //   "post_proc_successful":response.data['resultStatus']==0? '1' : '0',
+  //   "post_proc_error":response.data['resultStatus']==0? '' : response.data['resultStatusMessage'],
+  //   "post_proc_trace":response.data['inquiryCode'],
+  // });
+
+  if (response.statusCode == 200) {
+    if (response.data['resultStatus'] != 0) {
+      return Response.ok(
+          NajiResponse(resultCode: 1, failures: [
+            response.data?['resultStatusMessage'] ?? 'خطای ناشناخته'
+          ], data: {}).getJson(),
+          headers: {"Content-Type": "application/json"});
+    }
+    return Response.ok(
+        NajiResponse(
+            resultCode: 0,
+            failures: [],
+            data: {"inquiryCode": response.data['inquiryCode']}).getJson(),
+        headers: {"Content-Type": "application/json"});
+  } else {
+    return Response.ok(
+        NajiResponse(
+            resultCode: 1,
+            failures: ['پاسخ مناسب از سرویس دهنده دریافت نشد'],
+            data: {}).getJson(),
+        headers: {"Content-Type": "application/json"});
+  }
 }
 
 Response? nationalCodeError(String? nationalCode) {
