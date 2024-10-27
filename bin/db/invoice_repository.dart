@@ -131,6 +131,9 @@ class InvoiceRepository
       plateNumber: result[0][49].toString(),
       serviceName: result[0][50].toString(),
       najiResult: result[0][57].toString(),
+      inquiryCode: ((jsonDecode(result[0][56].toString())) as Map<String,dynamic>)['inquiryCode'],
+      otp: ((jsonDecode(result[0][56].toString())) as Map<String,dynamic>)['otp'],
+      ownerNationalCode: ((jsonDecode(result[0][56].toString())) as Map<String,dynamic>)['nationalCode'],
     );
   }
 
@@ -164,9 +167,9 @@ class InvoiceRepository
       plateNumber: result[0][49].toString(),
       serviceName: result[0][50].toString(),
       najiResult: result[0][57].toString(),
-      inquiryCode: (jsonEncode(result[0][56].toString()) as Map<String,dynamic>)['inquiryCode'],
-      otp: (jsonEncode(result[0][56].toString()) as Map<String,dynamic>)['otp'],
-      ownerNationalCode: (jsonEncode(result[0][56].toString()) as Map<String,dynamic>)['nationalCode'],
+      inquiryCode: ((jsonDecode(result[0][56].toString())) as Map<String,dynamic>)['inquiryCode'],
+      otp: ((jsonDecode(result[0][56].toString())) as Map<String,dynamic>)['otp'],
+      ownerNationalCode: ((jsonDecode(result[0][56].toString())) as Map<String,dynamic>)['nationalCode'],
     );
   }
 
@@ -252,7 +255,7 @@ class InvoiceRepository
           'resultpay_result': invoice.resultpay_result,
           'resultpay_status': invoice.resultpay_status,
           'payment_result': invoice.payment_result,
-          'refId': refId
+          'refId': refId,
         },
       );
     }

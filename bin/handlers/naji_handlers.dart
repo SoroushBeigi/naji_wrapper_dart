@@ -297,9 +297,10 @@ Future<Map<String, dynamic>?> vehiclesConditions({
   required String inquiryCode,
   required String otp,
 }) async {
+
   final response = await NajiNetworkModule.instance.dio
       .post('/naji/vehiclesConditionsInquiry', data: {
-    'nationalCode': nationalCode,
+    'NationalCode': nationalCode,
     'inquiryCode': inquiryCode,
     'otp': otp,
   });

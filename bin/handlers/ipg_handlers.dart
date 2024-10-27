@@ -29,7 +29,7 @@ String generatePaymentHtml(InvoiceData invoice) {
         message:
         invoice.verify_result==1? 'پرداخت با موفقیت انجام شد' : invoice.payment_result==1?'خطایی در سرویس ناجی رخ داده':'پرداخت ناموفق',
         callbackUrl:
-        'eks://emdad.behpardaz.net/payment-result?refId=${invoice.verify_result==1?invoice.refId:'-1'}',
+        'eks://emdad.behpardaz.net/payment-result?refId=${invoice.verify_result==1? invoice.refId: Constants.noPayment?invoice.refId : '-1'}',
       ));
   return '''
   <html>
@@ -333,26 +333,8 @@ Future<Response> callback(Request request) async {
       'localInvoiceId': int.parse(localInvoiceId ?? ''),
     });
 
-    InvoiceRepository.instance?.update(
-      tranResult.data['refID'],
-      InvoiceData(
-        rrn: tranResult.data['rrn'],
-        payGateTranID: tranResult.data['payGateTranID'],
-        amount: tranResult.data['amount'],
-        cardNumber: tranResult.data['cardNumber'],
-        payGateTranDate: tranResult.data['payGateTranDate'],
-        resultpay_datetime: resultpay_datetime,
-        resultpay_res_json: jsonEncode(tranResult.data),
-        resultpay_msg: tranResult.statusMessage,
-        resultpay_result: tranResult.statusCode == 200 ? 1 : 0,
-        payment_result: tranResult.statusCode == 200 ? 1 : 0,
-        resultpay_status: tranResult.statusCode,
-      ),
-    );
-    print('Updated DB ');
 
     if (tranResult.statusCode == 472) {
-
       final resultInvoice =  await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
       //TODO: do sth about null !!!!!!
       //TODO: do sth about null !!!!!!
@@ -364,8 +346,24 @@ Future<Response> callback(Request request) async {
 
     if (tranResult.statusCode == 200) {
       print('tranresult 200 ');
-      final invoice =
-          await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
+      InvoiceRepository.instance?.update(
+        tranResult.data['refID'],
+        InvoiceData(
+          rrn: tranResult.data['rrn'],
+          payGateTranID: tranResult.data['payGateTranID'],
+          amount: tranResult.data['amount'],
+          cardNumber: tranResult.data['cardNumber'],
+          payGateTranDate: tranResult.data['payGateTranDate'],
+          resultpay_datetime: resultpay_datetime,
+          resultpay_res_json: jsonEncode(tranResult.data),
+          resultpay_msg: tranResult.statusMessage,
+          resultpay_result: tranResult.statusCode == 200 ? 1 : 0,
+          payment_result: tranResult.statusCode == 200 ? 1 : 0,
+          resultpay_status: tranResult.statusCode,
+        ),
+      );
+      print('Updated DB ');
+      final invoice = await InvoiceRepository.instance?.getById(localInvoiceId ?? '-1');
 
       if (invoice == null) {
         print('invoice null ');
@@ -627,6 +625,9 @@ Future<Response> serviceResult(Request request) async {
   if (json == null || json == {}) {
     if (Constants.noPayment) {
       final najiStatus = await doNajiRequest(invoice);
+      print('reached noPayment');
+      print('reached noPayment');
+      print('reached noPayment');
       final readInvoice =
           await InvoiceRepository.instance?.getByRefId(invoice.refId ?? '');
       final testingJson = jsonDecode(readInvoice!.najiResult!);
