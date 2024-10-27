@@ -149,67 +149,131 @@ class NegativePointMapper extends ResultMapper<NajiNegativePointModel> {
       ];
 }
 
-class ViolationsAggregateMapper extends ResultMapper<NajiVehiclesViolationsAggregateModel> {
+class ViolationsAggregateMapper
+    extends ResultMapper<NajiVehiclesViolationsAggregateModel> {
   @override
   List<RowOfData> map(model) => [
-    RowOfData(
-      title: 'مبلغ حریمه',
-      svg: '$url/svg/payments.svg',
-      description: model.price ??'-',
-    ),
-    RowOfData(
-      title: 'وضعیت شکایت',
-      svg: '$url/svg/pan_tool.svg',
-      description: model.complaintStatus?? 'شکایت ندارد'
-    ),
-    RowOfData(
-        title: 'پلاک',
-        svg: '$url/svg/directions_car.svg',
-        description: model.plateChar??'-'
-    ),
-  ];
+        RowOfData(
+          title: 'مبلغ حریمه',
+          svg: '$url/svg/payments.svg',
+          description: model.price ?? '-',
+        ),
+        RowOfData(
+            title: 'وضعیت شکایت',
+            svg: '$url/svg/pan_tool.svg',
+            description: model.complaintStatus ?? 'شکایت ندارد'),
+        RowOfData(
+            title: 'پلاک',
+            svg: '$url/svg/directions_car.svg',
+            description: model.plateChar ?? '-'),
+      ];
 }
 
-class VehicleDocumentStatusMapper extends ResultMapper<NajiVehiclesDocumentsStatusModel> {
+class VehicleDocumentStatusMapper
+    extends ResultMapper<NajiVehiclesDocumentsStatusModel> {
   @override
   List<RowOfData> map(model) => [
-    RowOfData(
-      title: 'تاریخ صدور کارت',
-      svg: '$url/svg/calendar_month.svg',
-      description: model.cardPrintDate ??'-',
-    ),
-    RowOfData(
-        title: 'وضعیت ارسال کارت خودرو',
-        svg: '$url/svg/done.svg',
-        description: model.cardStatusTitle??'-'
-    ),
-    RowOfData(
-        title: 'بارکد پستی کارت خودرو',
-        svg: '$url/svg/barcode.svg',
-        description: model.cardPostalBarcode??'-'
-    ),
-    RowOfData(
-        title: 'تاریخ چاپ سند',
-        svg: '$url/svg/calendar_month.svg',
-        description: model.documentPrintDate?? '-'
-    ),
-    RowOfData(
-        title: 'وضعیت صدور سند',
-        svg: '$url/svg/done.svg',
-        description: model.documentStatusTitle??'-'
-    ),
-    RowOfData(
-        title: 'بارکد پستی سند',
-        svg: '$url/svg/barcode.svg',
-        description: model.documentPostalBarcode??'-'
-    ),
-    RowOfData(
-        title: 'پلاک',
-        svg: '$url/svg/directions_car.svg',
-        description: model.plateChar??'-'
-    ),
+        RowOfData(
+          title: 'تاریخ صدور کارت',
+          svg: '$url/svg/calendar_month.svg',
+          description: model.cardPrintDate ?? '-',
+        ),
+        RowOfData(
+            title: 'وضعیت ارسال کارت خودرو',
+            svg: '$url/svg/done.svg',
+            description: model.cardStatusTitle ?? '-'),
+        RowOfData(
+            title: 'بارکد پستی کارت خودرو',
+            svg: '$url/svg/barcode.svg',
+            description: model.cardPostalBarcode ?? '-'),
+        RowOfData(
+            title: 'تاریخ چاپ سند',
+            svg: '$url/svg/calendar_month.svg',
+            description: model.documentPrintDate ?? '-'),
+        RowOfData(
+            title: 'وضعیت صدور سند',
+            svg: '$url/svg/done.svg',
+            description: model.documentStatusTitle ?? '-'),
+        RowOfData(
+            title: 'بارکد پستی سند',
+            svg: '$url/svg/barcode.svg',
+            description: model.documentPostalBarcode ?? '-'),
+        RowOfData(
+            title: 'پلاک',
+            svg: '$url/svg/directions_car.svg',
+            description: model.plateChar ?? '-'),
+      ];
+}
 
-  ];
+class VehicleConditionsMapper extends ResultMapper<NajiVehicleConditionsModel> {
+  @override
+  List<RowOfData> map(model) => [
+        RowOfData(
+          title: 'تیپ خودرو',
+          svg: '$url/svg/garage.svg',
+          description: model.tip ?? '-',
+        ),
+        RowOfData(
+            title: 'مبلغ خلافی خودرو تا این لحظه',
+            svg: '$url/svg/payments.svg',
+            description: model.violationPrice ?? '-'),
+        RowOfData(
+            title: 'وضعیت قابل معامله بودن خودرو',
+            svg: '$url/svg/no_crash.svg',
+            description: model.transactionStatus ?? '-'),
+        RowOfData(
+            title: 'مدل خودرو',
+            svg: '$url/svg/directions_car.svg',
+            description: model.model ?? '-'),
+        RowOfData(
+            title: 'نوع سوخت',
+            svg: '$url/svg/local_gas_station.svg',
+            description: model.fuel ?? '-'),
+        RowOfData(
+            title: 'نوع کاربری',
+            svg: '$url/svg/directions_car.svg',
+            description: model.usage ?? '-'),
+        RowOfData(
+            title: 'زیر نوع کاربری',
+            svg: '$url/svg/directions_car.svg',
+            description: model.subUsage ?? '-'),
+        RowOfData(
+            title: 'تاریخ شروع بیمه',
+            svg: '$url/svg/calendar_month.svg',
+            description: model.insuranceStartDate ?? '-'),
+        RowOfData(
+            title: 'تاریخ اتمام بیمه',
+            svg: '$url/svg/calendar_month.svg',
+            description: model.insuranceEndDate ?? '-'),
+        RowOfData(
+            title: 'کد پیگیری جهت استعلام',
+            svg: '$url/svg/confirmation_number.svg',
+            description: model.trackingCode ?? '-'),
+        RowOfData(
+            title: 'تعداد دفعات تعویض پلاک خودرو',
+            svg: '$url/svg/directions_car.svg',
+            description: model.carTransactionCount ?? '-'),
+        RowOfData(
+            title: 'مبلغ عوارض آزاد راهی بر حسب ریال ',
+            svg: '$url/svg/road.svg',
+            description: model.freeWayTollsPrice ?? '-'),
+        RowOfData(
+            title: ' مبلغ مالیات نقل و انتقال',
+            svg: '$url/svg/payments.svg',
+            description: model.taxPrice ?? '-'),
+        RowOfData(
+            title: 'رنگ خودرو',
+            svg: '$url/svg/palette.svg',
+            description: model.color ?? '-'),
+        RowOfData(
+            title: ' سیستم خودرو',
+            svg: '$url/svg/garage.svg',
+            description: model.system ?? '-'),
+        RowOfData(
+            title: ' لیست خسارت های پرداختی از بیمه',
+            svg: '$url/svg/payments.svg',
+            description: model.insurance ?? '-'),
+      ];
 }
 
 class RowOfData {
@@ -322,7 +386,6 @@ class NajiVehiclesDocumentsStatusModel {
   final int? resultStatus;
   final String? resultStatusMessage;
 
-
   NajiVehiclesDocumentsStatusModel(
       {this.cardPrintDate,
       this.cardPostalBarcode,
@@ -330,23 +393,80 @@ class NajiVehiclesDocumentsStatusModel {
       this.documentPrintDate,
       this.cardStatusTitle,
       this.plateChar,
-        this.documentPostalBarcode,
+      this.documentPostalBarcode,
       this.resultStatus,
       this.resultStatusMessage});
 
   factory NajiVehiclesDocumentsStatusModel.fromJson(
           Map<String, dynamic> json) =>
       NajiVehiclesDocumentsStatusModel(
-        plateChar: json["plateChar"],
-        cardPrintDate: json["cardPrintDate"],
-        cardPostalBarcode: json["cardPostalBarcode"],
-        cardStatusTitle: json["cardStatusTitle"],
-        documentPrintDate: json["documentPrintDate"],
-        documentStatusTitle: json["documentStatusTitle"],
-        resultStatus: json["resultStatus"],
-        resultStatusMessage: json["resultStatusMessage"],
-        documentPostalBarcode:json['documentPostalBarcode']
+          plateChar: json["plateChar"],
+          cardPrintDate: json["cardPrintDate"],
+          cardPostalBarcode: json["cardPostalBarcode"],
+          cardStatusTitle: json["cardStatusTitle"],
+          documentPrintDate: json["documentPrintDate"],
+          documentStatusTitle: json["documentStatusTitle"],
+          resultStatus: json["resultStatus"],
+          resultStatusMessage: json["resultStatusMessage"],
+          documentPostalBarcode: json['documentPostalBarcode']);
+}
+
+class NajiVehicleConditionsModel {
+  final String? carTransactionCount;
+  final String? color;
+  final String? freeWayTollsPrice;
+  final String? fuel;
+  final String? insuranceEndDate;
+  final String? insuranceStartDate;
+  final String? subUsage;
+  final String? system;
+  final String? taxPrice;
+  final String? tip;
+  final String? trackingCode;
+  final String? transactionStatus;
+  final String? usage;
+  final String? violationPrice;
+  final String? model;
+  final String? insurance;
+
+  factory NajiVehicleConditionsModel.fromJson(Map<String, dynamic> json) =>
+      NajiVehicleConditionsModel(
+        carTransactionCount: json['carTransactionCount'],
+        color: json['color'],
+        freeWayTollsPrice: json['freeWayTollsPrice'],
+        fuel: json['fuel'],
+        insuranceEndDate: json['insuranceEndDate'],
+        insuranceStartDate: json['insuranceStartDate'],
+        subUsage: json['subUsage'],
+        system: json['system'],
+        taxPrice: json['taxPrice'],
+        tip: json['tip'],
+        trackingCode: json['trackingCode'],
+        transactionStatus: json['transactionStatus'],
+        usage: json['usage'],
+        violationPrice: json['violationPrice'],
+        model: json['model'],
+        insurance: json['insurance'],
       );
+
+  NajiVehicleConditionsModel({
+    this.insurance,
+    this.model,
+    this.carTransactionCount,
+    this.color,
+    this.freeWayTollsPrice,
+    this.fuel,
+    this.insuranceEndDate,
+    this.insuranceStartDate,
+    this.subUsage,
+    this.system,
+    this.taxPrice,
+    this.tip,
+    this.trackingCode,
+    this.transactionStatus,
+    this.usage,
+    this.violationPrice,
+  });
 }
 
 class NajiVehiclesViolationsAggregateModel {

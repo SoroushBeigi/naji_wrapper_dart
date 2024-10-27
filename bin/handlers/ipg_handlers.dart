@@ -696,6 +696,10 @@ Future<Response> serviceResult(Request request) async {
                 ? VehicleDocumentStatusMapper()
                     .map(NajiVehiclesDocumentsStatusModel.fromJson(testingJson))
                 : {},
+            'vehicleConditions': invoice.serviceId == '7'
+                ? VehicleConditionsMapper()
+                .map(NajiVehicleConditionsModel.fromJson(testingJson))
+                : {},
           }).getJson(),
           headers: {"Content-Type": "application/json"});
     } else {
@@ -768,6 +772,10 @@ Future<Response> serviceResult(Request request) async {
           'vehiclesDocumentsStatus': invoice.serviceId == '6'
               ? VehicleDocumentStatusMapper()
                   .map(NajiVehiclesDocumentsStatusModel.fromJson(json))
+              : {},
+          'vehicleConditions': invoice.serviceId == '7'
+              ? VehicleConditionsMapper()
+              .map(NajiVehicleConditionsModel.fromJson(json))
               : {},
         }).getJson(),
         headers: {"Content-Type": "application/json"});
