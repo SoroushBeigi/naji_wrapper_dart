@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
+import 'logger.dart';
 
 class PrettyDioLogger extends Interceptor {
   /// Print request [Options]
@@ -46,7 +48,7 @@ class PrettyDioLogger extends Interceptor {
         this.responseBody = true,
         this.error = true,
         this.maxWidth = 90,
-        this.compact = true,
+        this.compact = false,
         this.logPrint = print});
 
   @override
@@ -54,9 +56,9 @@ class PrettyDioLogger extends Interceptor {
     if (request) {
       _printRequestHeader(options);
     }
+    final Map<String, dynamic> requestHeaders = {};
     if (requestHeader) {
       _printMapAsTable(options.queryParameters, header: 'Query Parameters');
-      final requestHeaders = <String, dynamic>{};
       requestHeaders.addAll(options.headers);
       requestHeaders['contentType'] = options.contentType?.toString();
       requestHeaders['responseType'] = options.responseType.toString();
@@ -80,7 +82,16 @@ class PrettyDioLogger extends Interceptor {
         }
       }
     }
+    LogstashLogger.instance.log({
+      'type': 'Request',
+      'body': jsonEncode(options.data),
+      'time': DateTime.now().toIso8601String(),
+      'method':options.method,
+      'url':options.baseUrl,
+      'path':options.path
+    });
     super.onRequest(options, handler);
+
   }
 
   @override
@@ -125,8 +136,8 @@ class PrettyDioLogger extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     _printResponseHeader(response);
+    final responseHeaders = <String, String>{};
     if (responseHeader) {
-      final responseHeaders = <String, String>{};
       response.headers
           .forEach((k, list) => responseHeaders[k] = list.toString());
       _printMapAsTable(responseHeaders, header: 'Headers');
@@ -139,6 +150,12 @@ class PrettyDioLogger extends Interceptor {
       logPrint('║');
       _printLine('╚');
     }
+    LogstashLogger.instance.log({
+      'type': 'Response',
+      'body': jsonEncode(response.data),
+      'time': DateTime.now().toIso8601String(),
+      'status':response.statusCode,
+    });
     super.onResponse(response, handler);
   }
 

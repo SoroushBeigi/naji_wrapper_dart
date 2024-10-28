@@ -76,7 +76,7 @@ Middleware logRequestsAndResponses() {
 }
 
 class LogstashLogger {
-  static final LogstashLogger _instance = LogstashLogger._internal();
+  static final LogstashLogger instance = LogstashLogger._internal();
   late final String host;
   late final int port;
   Socket? _socket;
@@ -84,10 +84,10 @@ class LogstashLogger {
   LogstashLogger._internal();
 
   factory LogstashLogger(String host, int port) {
-    _instance.host = host;
-    _instance.port = port;
-    _instance._connect();
-    return _instance;
+    instance.host = host;
+    instance.port = port;
+    instance._connect();
+    return instance;
   }
 
   void _connect() async {
