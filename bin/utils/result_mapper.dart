@@ -112,7 +112,7 @@ class VehicleViolationsMapper extends ResultMapper<ViolationModel> {
           RowOfData(
               title: 'نوع ثبت تخلف',
               svg: '$url/svg/speed_camera.svg',
-              description: model.violationOccuredDate),
+              description: model.violationDeliveryType?.violationDeliveryTypeName ?? '-'),
           RowOfData(
               title: 'محل وقوع تخلف',
               svg: '$url/svg/location.svg',
